@@ -7,12 +7,18 @@ import ot
 host = '127.0.0.1'
 port = 65432
 
-print("\x1b[2J\x1b[H" + "  --  Bob  --\n")
+print("  --  Bob  --\n")
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 	s.connect((host, port))
 
-	m = ot.receive(s, 0)
+	choice = 0
+
+	print("Requesting message", choice)
+
+	m = ot.receive(s, choice)
 
 	if m:
-		print("Decoded:", m.decode())
+		print(f"Received \"{m.decode()}\"")
+	else:
+		print("Error!")

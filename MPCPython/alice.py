@@ -7,18 +7,21 @@ import ot
 host = '127.0.0.1'
 port = 65432
 
-print("\x1b[2J\x1b[H" + "  --  Alice  --\n")
+print("  --  Alice  --\n")
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 	s.bind((host, port))
 	s.listen()
 	conn, addr = s.accept()
-	#print("connection from", addr)
 
 	with conn as c:
-		m0 = "Hello".encode()
-		m1 = "World".encode()
-		
-		ot.send(c, m0, m1)
+		m0 = "Hello"
+		m1 = "World"
+
+		print(f"Sending \"{m0}\" or \"{m1}\"")
+
+		ot.send(c, m0.encode(), m1.encode())
 
 		c.recv(1) # listen for client close
+
+		print("Sent!")
