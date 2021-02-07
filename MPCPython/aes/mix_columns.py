@@ -15,7 +15,7 @@ def _mul(a: int, b: int): # Galois Field (256) Multiplication of two Bytes
 			a ^= 0x1B # x^8 + x^4 + x^3 + x + 1
 
 		b >>= 1
-	return p;
+	return p
 
 
 def _mix_single(a):

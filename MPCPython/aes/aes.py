@@ -22,9 +22,9 @@ def encrypt(key: bytearray, message: bytearray):
 	return state.to_bytes()
 
 
-def decrypt(key: bytearray, ctext: bytearray):
+def decrypt(key: bytearray, ctxt: bytearray):
 	keys  = key_schedule.get_keys(key)
-	state = State(ctext)
+	state = State(ctxt)
 	
 	# first round
 	state.add_round_key(keys[10])
