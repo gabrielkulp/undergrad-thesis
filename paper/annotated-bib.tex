@@ -1,0 +1,29 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[hidelinks]{hyperref}
+\usepackage[style=reading,sorting=none]{biblatex}
+\addbibresource{references.bib}
+
+\author{Gabriel Kulp}
+\title{Annotated Bibliography}
+
+\makeatletter
+\hypersetup{ % set PDF metadata
+	pdftitle={\@title},
+	pdfauthor={\@author},
+	pdfsubject={CS 461},
+	pdfkeywords={Capstone, WIC, Requirements}
+}
+\makeatother
+
+\begin{document}
+
+\maketitle
+
+What follows are five papers laying the foundation for modern secure multi-party computation. The last source is a likely starting point for my work, since it provides a wealth of information for designing a practical Garbled Circuits implementation.
+
+% since package was imported with sorting=none, this is the order in the bibliography
+\nocite{YaoGC,FirstOT,FreeXOR,Fairplay,TinyGarble}
+\printbibliography[heading=none]
+
+\end{document}

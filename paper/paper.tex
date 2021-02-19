@@ -1,0 +1,104 @@
+\documentclass[letterpaper]{article}
+%\usepackage[utf8]{inputenc}
+\usepackage[hidelinks]{hyperref}
+\usepackage[sorting=none,style=reading]{biblatex}
+\usepackage{xcolor}
+
+\addbibresource{references.bib}
+
+\author{Gabriel Kulp, Dr.\@ Mike Rosulek}
+\title{Mobile Cryptographic Co-Processor for Privacy-Preserving Two-Party Computation}
+
+\makeatletter
+\renewcommand{\@seccntformat}[1]{} % disable section numbering
+\hypersetup{ % set PDF metadata
+	pdftitle={\@title},
+	pdfauthor={Gabriel Kulp},
+	pdfsubject={CS 462},
+	pdfkeywords={Capstone, MPC, Garbled Circuits, FPGA, Cryptography}
+}
+\makeatother
+
+\newcommand{\comment}[1]{{\color{red}\textit{#1}}}
+\newcommand{\ISquaredC}{I\textsuperscript{2}C}
+
+\begin{document}
+
+\maketitle
+
+% "cite" these first to get the order right in the annotated bib
+\nocite{YaoGC,FirstOT,Fairplay,FreeXOR,HalfGates,TinyGarble,NeuralNets}
+
+\begin{abstract}
+Multi-party computation (MPC) is a cryptographic protocol that allows parties to learn the output of some function of their private inputs without trusting a third party to perform the computation. This is usually done at a large scale between data centers, with little emphasis on individuals' devices or mobile hardware. In this paper, I present a proof-of-concept implementation of two-party computation on a commodity smartphone paired with a low-power FPGA\@. I compare the performance and power consumption of the system with a software-only setup and with the FPGA connected for acceleration.
+\end{abstract}
+
+\section{Motivation}
+In the modern cloud-computing model, providers compute on client data using proprietary algorithms. When clients send data to be processed, it is also available to the service provider for logging and analysis. This violation of privacy serves as a building block of the world of commercial machine learning. MPC provides a cryptographic solution to this problem, removing the need to share data or trust a third party, while still providing a mechanism to perform the same computation.
+
+One obstacle to widespread adoption of MPC is the poor efficiency of executing the protocol. The overhead slows the computation by several orders of magnitude. To address this, I propose a trusted coprocessor to accelerate the client's workload. This coprocessor is attached to a mobile device (smartphone) to handle the most power-hungry aspects of the calculation more efficiently than the phone's built-in SoC (system on chip).
+
+Support for efficient MPC in mobile devices could open the doors to many other privacy- and security-focused improvements to how our computers communicate. For example, a user could evaluate a pre-trained machine learning model without that model being publicly available (\cite{NeuralNets}). This would allow a user to take a photograph and have it classified by a private algorithm without providing the image in the clear to the owner of the algorithm.
+
+\comment{Problem Statement}
+
+\section{Research Scope}
+I implemented \comment{(will implement)} Yao's Garbled Circuits with half-gates in software, and compare its system resource utilization (CPU time and RAM usage) and power consumption to a second, interoperable implementation that interfaces with an FPGA\@. It is out of scope to draw comparisons to other implementations or design a polished user interface.
+
+\section{Background}
+Functions evaluated during MPC are represented as boolean circuits. I evaluate these circuits with Yao's Garbled Circuits, a secure MPC protocol described in a series of presentations by Andrew Yao in 1986 (\cite{YaoGC}). In the most basic terms, one party ``garbles'' the circuit by encrypting and transposing the inputs to each logic gate and bakes in their inputs, then sends the stream of garbled gates to a second party, who evaluates the garbled circuit with their own private inputs while learning nothing about the garbler's inputs.
+
+This presents an asymmetry in which one party must calculate each node of the circuit for all inputs and broadcast a high volume of information while the other party performs about half the work and only sends back data about the inputs and outputs. This asymmetry is similar to the current cloud-computing model, where servers in data centers perform difficult calculations while the client does minimal work to interpret the result.
+
+There have been several improvements to Yao's original protocol since it was published. The most recent at the time of writing is called Half Gates (\cite{HalfGates}), which reduces the data sent from the garbler to the evaluator by short-circuiting AND gates to encode either buffers or inverters depending on each party's known inputs to that gate.
+
+\section{Approach}
+I chose the Pine64 PinePhone for the mobile platform since it fully supports Linux, allowing me to use the same source code for the mobile and server sides of the protocol. The PinePhone also includes an \ISquaredC{} expansion header with good documentation and other reference projects by the community. I chose the iCEBreaker FPGA development board (Lattice iCE40) for its low cost, open-source board design, open-source toolchain, and accessible community.
+
+Most current research focuses on communication between data centers or between a client and the cloud. My project focuses on lower-power devices for which hardware acceleration is the only viable option to maintain reasonable power efficiency. Power draw (measured by battery life) is therefore the point of comparison for the software-only and FPGA implementations.
+
+I have not selected an FPGA yet, but the Lattice ICE40 is looking promising as a low-cost low-power chip that has an open-source toolchain available. I would rather not rely on closed-source pre-designed components (IP cores), which would impede auditing the whole system. Audits of the full source code should be easy in a security-focused application like this one. Also, I don't need the added convenience of drop-in solutions; since I only intend to communicate with the FPGA over I\textsuperscript{2}C, I don't need to worry about how to implement high-complexity components such as Ethernet controllers.
+
+The nature of communication between the host mobile device and the FPGA has yet to be determined. For example, it might be best to construct a static FPGA configuration for each circuit, but the number of logic cells could represent an unreasonable restriction on the size of the circuit. A static FPGA configuration could support a streaming solution where the host computer provides circuit information in topological order, but the communication could be the bottleneck. The most likely option is to test several implementations and describe their tradeoffs in power, time, and complexity, then compare these tradeoffs to the requirements of possible workloads.
+
+\section{Results}
+{\color{red}
+Obviously I don't have any results yet since this project is a work-in-progress. This seems like a reasonable place to describe what I'm done with and what's remaining, though.
+
+\subsection{Progress so far}
+
+\begin{itemize}
+	\item This draft
+	\item Implemented AES (encryption primitive used for hashing)
+	\item Implemented oblivious transfer (I might re-write using elliptic curves, but what I have now with RSA works)
+	\item Implemented reading circuits from a file (in a standardized format)
+	\item Implemented non-cryptographic evaluation of circuits (to verify that I loaded the circuit description properly and later to verify that the cryptographic version returns the same answer)
+	\item Got things on \href{https://github.com/gabrielkulp/undergrad-thesis}{\underline{GitHub}} (though I'm waiting to push circuit reading and evaluation until they're a bit more polished)
+	\item Choice of hardware, preliminary research on software
+\end{itemize}
+
+I feel okay about my progress at this stage. I've used about half my time, and I could maybe argue that I'm halfway done. I hope to start working with hardware in mid-to-late March (Spring break) and finish a few weeks before graduation in June.
+
+I originally planned to re-write all the code in C or Rust after my initial implementation in Python, since I assume I'll be leaving a lot of performance on the table by sticking to my prototyping language. I'm strongly considering skipping this step, since it could add a lot of time and complexity, and my project (as currently formulated) is about a comparison rather than absolute performance numbers. On the other hand, the effectiveness of the FPGA might depend heavily on the CPU's workload, which could change based on the language.
+
+\subsection{Work Remaining}
+
+\begin{itemize}
+	\item Actually garble some circuits (I'm really close!)
+	\item Perform first private function evaluation between phone and laptop/server
+	\item Work out the details of how and what the phone will offload to the FPGA
+	\item Write the hardware description for the FPGA (probably mostly AES)
+	\item Testing and gathering battery life data with and without FPGA
+\end{itemize}
+
+}
+\section{Conclusion}
+\comment{This section will describe the benefits and drawbacks of strapping an FPGA to a phone for secure function evaluation.}
+
+\section{References}
+\comment{This section is currently an annotated bibliography, but it'll just be a list of references in the final version.}
+
+\printbibliography[heading=none]
+
+
+\end{document}

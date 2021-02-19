@@ -1,0 +1,134 @@
+@inproceedings{YaoGC,
+  author     = {Andrew Chi-Chih Yao},
+  title      = {How to Generate and Exchange Secrets},
+  booktitle  = {27th Annual Symposium on Foundations of Computer Science, Toronto, Canada, 27-29 October 1986},
+  pages      = {162--167},
+  publisher  = {{IEEE} Computer Society},
+  year       = {1986},
+  doi        = {10.1109/SFCS.1986.25},
+  timestamp  = {Wed, 16 Oct 2019 14:14:54 +0200},
+  biburl     = {https://dblp.org/rec/conf/focs/Yao86.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org},
+  keywords   = {annotated_bib},
+  annotation = {
+    This is the original presentation in which Yao introduced the idea of garbled circuits while explaining a separate paper of his. Yao introduced the original example usage, called the Millionaires' Problem, in which two people wish to determine which has more money without sharing how much money they have. In this case, they together evaluate an inequality without revealing their inputs. Yao's protocol is still used as a benchmark for other protocols, and serves as a starting point for research on improvements.
+  }
+}
+
+@INPROCEEDINGS{TinyGarble,
+  author     = {E. M. {Songhori} and S. U. {Hussain} and A. {Sadeghi} and T. {Schneider} and F. {Koushanfar}},
+  booktitle  = {2015 IEEE Symposium on Security and Privacy}, 
+  title      = {TinyGarble: Highly Compressed and Scalable Sequential Garbled Circuits}, 
+  year       = {2015},
+  pages      = {411-428},
+  doi        = {10.1109/SP.2015.32},
+  keywords   = {annotated_bib},
+  annotation = {
+    This is a more recent work that discusses many performance improvements in a full pipeline from high-level source code to a highly-optimized boolean circuit. The authors provide libraries and optimizations for translating C, C++, Verilog, or VHDL code into a compact boolean circuit that offers improvements of several orders of magnitude for certain operations. These improvements allow for the implementation of SHA-3 and a full general-purpose virtualized CPU with the MIPS I instruction set.
+  }
+}
+
+@inproceedings{Fairplay,
+  author     = {Dahlia Malkhi and
+                Noam Nisan and
+                Benny Pinkas and
+                Yaron Sella},
+  editor     = {Matt Blaze},
+  title      = {Fairplay - Secure Two-Party Computation System},
+  booktitle  = {Proceedings of the 13th {USENIX} Security Symposium, August 9-13,
+                2004, San Diego, CA, {USA}},
+  pages      = {287--302},
+  publisher  = {{USENIX}},
+  year       = {2004},
+  url        = {http://www.usenix.org/publications/library/proceedings/sec04/tech/malkhi.html},
+  timestamp  = {Wed, 04 Jul 2018 13:06:34 +0200},
+  biburl     = {https://dblp.org/rec/conf/uss/MalkhiNPS04.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org},
+  keywords   = {annotated_bib},
+  annotation = {
+    This is the first usable implementation of secure two-party computation. The researchers designed two tools to set up a workflow for two parties to write a high-level program, compile it to a boolean circuit, and then evaluate that circuit together. In this paper, they also describe an optimization called ``point-and-permute'', which reduces the number of decryptions per gate from \(n/2\) on average (where \(n\) is the number of possible gate outputs) to just \(1\). This optimization is common in implementations today and follows very naturally from Yao's original protocol.
+  }
+}
+
+@inproceedings{FreeXOR,
+  author     = {Vladimir Kolesnikov and
+                Thomas Schneider},
+  editor     = {Luca Aceto and
+                Ivan Damg{\aa}rd and
+                Leslie Ann Goldberg and
+                Magn{\'{u}}s M. Halld{\'{o}}rsson and
+                Anna Ing{\'{o}}lfsd{\'{o}}ttir and
+                Igor Walukiewicz},
+  title      = {Improved Garbled Circuit: Free {XOR} Gates and Applications},
+  booktitle  = {Automata, Languages and Programming, 35th International Colloquium,
+                {ICALP} 2008, Reykjavik, Iceland, July 7-11, 2008, Proceedings, Part
+                {II} - Track {B:} Logic, Semantics, and Theory of Programming {\&}
+                Track {C:} Security and Cryptography Foundations},
+  series     = {Lecture Notes in Computer Science},
+  volume     = {5126},
+  pages      = {486--498},
+  publisher  = {Springer},
+  year       = {2008},
+  doi        = {10.1007/978-3-540-70583-3\_40},
+  timestamp  = {Fri, 27 Mar 2020 09:02:59 +0100},
+  biburl     = {https://dblp.org/rec/conf/icalp/KolesnikovS08.bib},
+  bibsource  = {dblp computer science bibliography, https://dblp.org},
+  keywords   = {annotated_bib},
+  annotation = {
+    This paper introduces an optimization called ``Free-XOR'', in which XOR gates in the boolean circuit can be computed without any cryptographic operations. Wire labels can be chosen such that the XOR of the labels produces the correct wire label for the output without performing a decryption. This optimization is compatible with the ``point-and-permute'' optimization, and both are rather small modifications to Yao's original Garbled Circuits protocol.
+  }
+}
+
+@misc{HalfGates,
+  author     = {Samee Zahur and Mike Rosulek and David Evans},
+  title      = {Two Halves Make a Whole: Reducing Data Transfer in Garbled Circuits using Half Gates},
+  booktitle  = {Cryptology ePrint Archive, Report 2014/756},
+  year       = {2014},
+  note       = {\url{https://eprint.iacr.org/2014/756}},
+  keywords   = {annotated_bib},
+  annotation = {
+    This paper introduces an optimization called ``half gates'', in which the information sent from the garbler to the evaluator for AND gates can be reduced to two ciphertexts while maintaining compatibility with Free-XOR. This is the state-of-the-art optimization for general-purpose circuits of standard boolean gates.
+  }
+}
+
+@misc{FirstOT,
+  title      = {How To Exchange Secrets with Oblivious Transfer},
+  booktitle  = {IACR Eprint archive},
+  url        = {http://eprint.iacr.org/2005/187},
+  note       = {Harvard University Technical Report 81 talr@watson.ibm.com 12955 received 21 Jun 2005},
+  author     = {Michael O. Rabin},
+  year       = {1981},
+  keywords   = {annotated_bib},
+  annotation = {
+    This paper describes the first oblivious transfer protocol, which is a required primitive for secure multi-party computation. An oblivious transfer protocol allows one party to make multiple messages available to a second party. The second party then retrieves only one of those messages without revealing to the first party which message was selected, and without learning the contents of any other message. This procedure relies on public-key cryptography, which is computationally expensive. In MPC, the circuit evaluator selects their inputs via oblivious transfer, so the circuit creator does not learn the other party's inputs and the evaluator doesn't learn anything about the other possible outputs.
+  }
+}
+
+@inproceedings{MobileGC,
+  author     = {Henry Carter and Benjamin Mood and Patrick Traynor and Kevin Butler},
+  title      = {Secure Outsourced Garbled Circuit Evaluation for Mobile Devices},
+  booktitle  = {22nd {USENIX} Security Symposium ({USENIX} Security 13)},
+  year       = {2013},
+  isbn       = {978-1-931971-03-4},
+  address    = {Washington, D.C.},
+  pages      = {289--304},
+  url        = {https://www.usenix.org/conference/usenixsecurity13/technical-sessions/paper/carter},
+  publisher  = {{USENIX} Association},
+  month      = aug,
+  keywords   = {annotated_bib},
+  annotation = {
+    This paper is similar to mine in that it focuses on mobile devices rather than data centers. It presents an offloading scheme that reduces the computation and communication that the mobile device needs to do, instead requiring a cloud-based outsourcing agent.
+  }
+}
+
+@misc{NeuralNets,
+  author     = {Marshall Ball and Brent Carmer and Tal Malkin and Mike Rosulek and Nichole Schimanski},
+  title      = {Garbled Neural Networks are Practical},
+  note       = {Cryptology ePrint Archive, Report 2019/338},
+  year       = {2019},
+  url        = {https://eprint.iacr.org/2019/338},
+  keywords   = {annotated_bib},
+  annotation = {
+    Dr. Rosulek's paper on MPC neural network evaluations. This paper describes a very similar use-case to what I am envisioning, with a garbler providing secure access to a pre-trained neural network without learning about the network's inputs. In Yao's framing, one party's inputs are the network's topology, weights, biases, and activation functions, and the other party's inputs are the data to be passed through the neural network. The paper goes into many implementation details, and the source code is somewhat active on GitHub, so this should be a very useful resource.
+  }
+}
