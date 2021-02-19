@@ -88,8 +88,21 @@ def test_rsa(verbose):
 	return (m2.to_bytes(len(m), "big") == m)
 
 
+import circuit
+def test_circuit():
+	c = circuit.read_from_file("circuit.txt")
+	circuit.evaluate(c, [256,2])
+	circuit.evaluate(c, [928374,4345])
+	circuit.evaluate(c, [-234,43])
+	circuit.evaluate(c, [-987243,-345])
+	circuit.evaluate(c, [-9872,-333345])
+
+
+
+
 def test_all(verbose):
 	print("AES:", test_aes(verbose))
 	print("RSA:", test_rsa(verbose))
 
-test_all(False)
+#test_all(False)
+test_circuit()
