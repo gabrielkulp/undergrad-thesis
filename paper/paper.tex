@@ -6,7 +6,7 @@
 
 \addbibresource{references.bib}
 
-\author{Gabriel Kulp, Dr.\@ Mike Rosulek}
+\author{Gabriel Kulp}
 \title{Mobile Cryptographic Co-Processor for Privacy-Preserving Two-Party Computation}
 
 \makeatletter
@@ -34,11 +34,11 @@ Multi-party computation (MPC) is a cryptographic protocol that allows parties to
 \end{abstract}
 
 \section{Motivation}
-In the modern cloud-computing model, providers compute on client data using proprietary algorithms. When clients send data to be processed, it is also available to the service provider for logging and analysis. This violation of privacy serves as a building block of the world of commercial machine learning. MPC provides a cryptographic solution to this problem, removing the need to share data or trust a third party, while still providing a mechanism to perform the same computation.
+In the modern cloud-computing model, providers compute on client data using proprietary algorithms. When clients send data to be processed, it is also available to the service provider for logging and analysis. This violation of privacy serves as a building block of the world of commercial machine learning. MPC provides a cryptographic solution to this problem, removing the need to share data or trust a third party, while still providing a mechanism to perform the same computation, provided that both parties support it.
 
-One obstacle to widespread adoption of MPC is the poor efficiency of executing the protocol. The overhead slows the computation by several orders of magnitude. To address this, I propose a trusted coprocessor to accelerate the client's workload. This coprocessor is attached to a mobile device (smartphone) to handle the most power-hungry aspects of the calculation more efficiently than the phone's built-in SoC (system on chip).
+One obstacle to widespread adoption of MPC is the poor efficiency of execution. The protocol's overhead slows the computation by several orders of magnitude. To address this, I propose a trusted coprocessor to accelerate the client's workload. This coprocessor is attached to a mobile device (smartphone) to handle the most power-hungry aspects of the calculation more efficiently than the phone's built-in SoC (system on chip).
 
-Support for efficient MPC in mobile devices could open the doors to many other privacy- and security-focused improvements to how our computers communicate. For example, a user could evaluate a pre-trained machine learning model without that model being publicly available (\cite{NeuralNets}). This would allow a user to take a photograph and have it classified by a private algorithm without providing the image in the clear to the owner of the algorithm.
+Support for efficient MPC in mobile devices could open the doors to many other privacy- and security-focused improvements to how our computers communicate. For example, a user could evaluate a pre-trained machine learning model without revealing their data to the service provider and without the service provider revealing their model (\cite{NeuralNets}). This would allow a user to take a photograph and have it classified by a private algorithm without providing the image in the clear to the owner of the algorithm.
 
 \comment{Problem Statement}
 
@@ -46,7 +46,7 @@ Support for efficient MPC in mobile devices could open the doors to many other p
 I implemented \comment{(will implement)} Yao's Garbled Circuits with half-gates in software, and compare its system resource utilization (CPU time and RAM usage) and power consumption to a second, interoperable implementation that interfaces with an FPGA\@. It is out of scope to draw comparisons to other implementations or design a polished user interface.
 
 \section{Background}
-Functions evaluated during MPC are represented as boolean circuits. I evaluate these circuits with Yao's Garbled Circuits, a secure MPC protocol described in a series of presentations by Andrew Yao in 1986 (\cite{YaoGC}). In the most basic terms, one party ``garbles'' the circuit by encrypting and transposing the inputs to each logic gate and bakes in their inputs, then sends the stream of garbled gates to a second party, who evaluates the garbled circuit with their own private inputs while learning nothing about the garbler's inputs.
+In the garbled circuits protocol, functions are represented as boolean circuits. I evaluate these circuits with Yao's Garbled Circuits, a secure MPC protocol described in a series of presentations by Andrew Yao in 1986 (\cite{YaoGC}). In the most basic terms, one party ``garbles'' the circuit by encrypting and transposing the inputs to each logic gate and bakes in their inputs, then sends the stream of garbled gates to a second party, who evaluates the garbled circuit with their own private inputs while learning nothing about the garbler's inputs.
 
 This presents an asymmetry in which one party must calculate each node of the circuit for all inputs and broadcast a high volume of information while the other party performs about half the work and only sends back data about the inputs and outputs. This asymmetry is similar to the current cloud-computing model, where servers in data centers perform difficult calculations while the client does minimal work to interpret the result.
 
