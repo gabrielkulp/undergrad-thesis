@@ -1,4 +1,4 @@
-import socket
+from socket import socket
 import rsa
 import os
 
@@ -9,7 +9,7 @@ pubkey_size = 16 # bytes
 # use little-endian for on-device encoding, and
 # use big-endian for anything sent through the socket
 
-def send(sock: socket.socket, message0, message1): # Alice
+def send(sock: socket, message0, message1): # Alice
 	pubkey, privkey = rsa.generate_keys(pubkey_size)
 
 	# send public key
@@ -37,7 +37,7 @@ def send(sock: socket.socket, message0, message1): # Alice
 
 
 
-def receive(sock: socket.socket, choice): # Bob
+def receive(sock: socket, choice): # Bob
 	# get public key
 	exponent = int.from_bytes(sock.recv(exponent_size), "big")
 	modulo   = int.from_bytes(sock.recv(pubkey_size), "big")
