@@ -90,12 +90,19 @@ def test_rsa(verbose):
 
 import circuit
 def test_circuit():
-	c = circuit.read_from_file("circuit.txt")
-	circuit.evaluate(c, [256,2])
-	circuit.evaluate(c, [928374,4345])
-	circuit.evaluate(c, [-234,43])
-	circuit.evaluate(c, [-987243,-345])
-	circuit.evaluate(c, [-9872,-333345])
+	inputs = [(256,2), (928374,4345), (-234,43), (-987243,-345), (-9872,-333345)]
+	
+	c = circuit.read_from_file("udivide64.txt")
+	gc = circuit.garble(c)
+	for i in inputs:
+		clear = circuit.evaluate(c,i)
+		garbled = circuit.gc_evaluate(gc,i)
+		print("clear:  ", clear)
+		print("garbled:", garbled)
+		print("")
+		if clear != garbled:
+			return False
+	return True
 
 
 
