@@ -4,23 +4,23 @@
 def forward(state):
 	for i in range(4):
 		for j in range(4):
-			# The most-significant nibble is the row index
-			# and the least-significant is the column.
-			state[i][j] = forward_table[state[i][j] >> 4][state[i][j] & 0x0F]
+			state[i][j] = lookup_forward(state[i][j])
 	return state
 
 def inverse(state):
 	for i in range(4):
 		for j in range(4):
-			state[i][j] = inverse_table[state[i][j] >> 4][state[i][j] & 0x0F]
+			state[i][j] = lookup_inverse(state[i][j])
 	return state
 
-# four-byte operations for the key schedule.
-# I inlined this function above for speed.
+# The most-significant nibble is the row index
+# and the least-significant is the column.
+lookup_forward = lambda val: forward_table[val>>4][val&0x0F]
+lookup_inverse = lambda val: inverse_table[val>>4][val&0x0F]
+
+# four-byte operations for the key schedule
 def sub_word(word):
-	for i in range(4):
-		word[i] = forward_table[word[i] >> 4][word[i] & 0x0F]
-	return word
+	return map(lookup_forward, word)
 
 # Lookup tables for S-box transformations.
 # https://en.wikipedia.org/wiki/Rijndael_S-box

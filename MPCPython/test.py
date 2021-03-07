@@ -7,24 +7,24 @@ def test_aes(verbose):
 
 	tests = [
 		TestVector(
-			key        = bytearray.fromhex("00000000000000000000000000000000"),
-			plaintext  = bytearray.fromhex("f34481ec3cc627bacd5dc3fb08f273e6"),
-			ciphertext = bytearray.fromhex("0336763e966d92595a567cc9ce537f5e")
+			key        = bytearray.fromhex("2b7e151628aed2a6abf7158809cf4f3c"),
+			plaintext  = bytearray.fromhex("6bc1bee22e409f96e93d7e117393172a"),
+			ciphertext = bytearray.fromhex("3ad77bb40d7a3660a89ecaf32466ef97")
 		),
 		TestVector(
-			key        = bytearray.fromhex("00000000000000000000000000000000"),
-			plaintext  = bytearray.fromhex("9798c4640bad75c7c3227db910174e72"),
-			ciphertext = bytearray.fromhex("a9a1631bf4996954ebc093957b234589")
+			key        = bytearray.fromhex("2b7e151628aed2a6abf7158809cf4f3c"),
+			plaintext  = bytearray.fromhex("ae2d8a571e03ac9c9eb76fac45af8e51"),
+			ciphertext = bytearray.fromhex("f5d3d58503b9699de785895a96fdbaaf")
 		),
 		TestVector(
-			key        = bytearray.fromhex("00000000000000000000000000000000"),
-			plaintext  = bytearray.fromhex("96ab5c2ff612d9dfaae8c31f30c42168"),
-			ciphertext = bytearray.fromhex("ff4f8391a6a40ca5b25d23bedd44a597")
+			key        = bytearray.fromhex("2b7e151628aed2a6abf7158809cf4f3c"),
+			plaintext  = bytearray.fromhex("30c81c46a35ce411e5fbc1191a0a52ef"),
+			ciphertext = bytearray.fromhex("43b1cd7f598ece23881b00e3ed030688")
 		),
 		TestVector(
-			key        = bytearray.fromhex("00000000000000000000000000000000"),
-			plaintext  = bytearray.fromhex("6a118a874519e64e9963798a503f1d35"),
-			ciphertext = bytearray.fromhex("dc43be40be0e53712f7e2bf5ca707209")
+			key        = bytearray.fromhex("2b7e151628aed2a6abf7158809cf4f3c"),
+			plaintext  = bytearray.fromhex("f69f2445df4f9b17ad2b417be66c3710"),
+			ciphertext = bytearray.fromhex("7b0c785e27e8ad3f8223207104725dd4")
 		),
 		TestVector(
 			key        = bytearray.fromhex("00000000000000000000000000000000"),
@@ -62,9 +62,10 @@ def test_aes(verbose):
 		if verbose:
 			print("key:    ", test.key.hex())
 			print("inputs: ", test.plaintext.hex(), "-e->", test.ciphertext.hex())
-		enc = aes.encrypt(test.key, test.plaintext)
-		dec = aes.decrypt(test.key, test.ciphertext)
-		round_trip = aes.decrypt(test.key, aes.encrypt(test.key, test.plaintext))
+		keys = aes.get_key_schedule(test.key)
+		enc = aes.encrypt(keys, test.plaintext)
+		dec = aes.decrypt(keys, test.ciphertext)
+		round_trip = aes.decrypt(keys, aes.encrypt(keys, test.plaintext))
 		if verbose:
 			print("outputs:", dec.hex(), "-e->", enc.hex())
 			print("round-trip?", (test.plaintext == round_trip))
@@ -93,7 +94,9 @@ def test_circuit():
 	inputs = [(256,2), (928374,4345), (-234,43), (-987243,-345), (-9872,-333345)]
 	
 	c = circuit.read_from_file("udivide64.txt")
+	print("read")
 	gc = circuit.garble(c)
+	print("garbled")
 	for i in inputs:
 		clear = circuit.evaluate(c,i)
 		garbled = circuit.gc_evaluate(gc,i)
@@ -105,11 +108,9 @@ def test_circuit():
 	return True
 
 
-
-
 def test_all(verbose):
 	print("AES:", test_aes(verbose))
 	print("RSA:", test_rsa(verbose))
 
-#test_all(False)
+test_all(False)
 test_circuit()

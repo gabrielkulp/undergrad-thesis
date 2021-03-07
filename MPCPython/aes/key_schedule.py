@@ -12,14 +12,12 @@ def _rot_word(word):
 	#return word[-1:] + word[0:3]
 
 def _xor3(a, b, c):
-	for i in range(4):
-		a[i] ^= b[i] ^ c[i]
-	return a
+	f = lambda x: x[0]^x[1]^x[2]
+	return map(f, zip(a,b,c))
 
-def xor2(a, b):
-	for i in range(4):
-		a[i] ^= b[i]
-	return a
+def _xor2(a, b):
+	f = lambda x: x[0]^x[1]
+	return map(f, zip(a,b))
 
 def get_keys(orig_key):
 	words = [0] * 44 # 4-byte key chunks
@@ -32,21 +30,21 @@ def get_keys(orig_key):
 
 		if i % 4 == 0:
 			tmp = sub_bytes.sub_word(_rot_word(words[i-1][:]))
-			words[i] = _xor3(words[i-4][:], tmp, rc_words[i//4][:])
+			words[i] = list(_xor3(words[i-4][:], tmp, rc_words[i//4][:]))
 			continue
 		
 		# else
-		words[i] = xor2(words[i-4][:], words[i-1])
+		words[i] = list(_xor2(words[i-4][:], words[i-1]))
 	
 	# next combine chunks of 4 bytes into chunks of 16
 	for i in range(11):
-		keys[i] = words[4*i:4*i+4]# + words[4*i+1] + words[4*i+2] + words[4*i+3]
+		keys[i] = tuple([tuple(w) for w in words[4*i:4*i+4]])
 
-	return keys
+	return tuple(keys)
 
 def add_round_key(key: bytearray, state):
 	for i in range(4):
-		state[i] = xor2(key[i], state[i])
+		state[i] = list(_xor2(key[i], state[i]))
 	return state
 
 # test vectors: https://samiam.org/key-schedule.html

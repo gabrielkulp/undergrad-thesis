@@ -6,11 +6,10 @@ from .types import Circuit, GarbledCircuit, _Gate, _GateType
 # faster "hash" for testing
 #hash = lambda x: ~x
 #hash_pair = lambda x, y: (hash(x)) ^ (hash(y))
-#c_idx = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
 
-aes_key   = bytearray.fromhex("00000000000000000000000000000000")
+aes_keys  = aes.get_key_schedule(bytearray.fromhex("00000000000000000000000000000000"))
 _to_bytes = lambda x: bytearray(x.to_bytes(16, "little"))
-hash_pair = lambda x, y: int.from_bytes(aes.encrypt(aes_key, _to_bytes(x^y)), "little")
+hash_pair = lambda x, y: int.from_bytes(aes.encrypt(aes_keys, _to_bytes(x^y)), "little")
 c_idx     = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
 
 _generate_wire_label = lambda: int.from_bytes(os.urandom(16), "little")
