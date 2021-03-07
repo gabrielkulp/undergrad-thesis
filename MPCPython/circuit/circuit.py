@@ -3,19 +3,21 @@ import aes
 import random # for generating colors
 from .types import Circuit, GarbledCircuit, _Gate, _GateType
 
+# faster "hash" for testing
+#hash = lambda x: ~x
+#hash_pair = lambda x, y: (hash(x)) ^ (hash(y))
+#c_idx = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
 
-#aes_key = bytearray.fromhex("00000000000000000000000000000000")
-# Placeholder hash. Replace with aes.encrypt(aes_key, bytearray(x))
-hash = lambda x: ~x
-hash_pair = lambda x, y: (hash(x)) ^ (hash(y))
-c_idx = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
+aes_key   = bytearray.fromhex("00000000000000000000000000000000")
+_to_bytes = lambda x: bytearray(x.to_bytes(16, "little"))
+hash_pair = lambda x, y: int.from_bytes(aes.encrypt(aes_key, _to_bytes(x^y)), "little")
+c_idx     = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
 
-def _generate_wire_label():
-	return int.from_bytes(os.urandom(16), "little")
+_generate_wire_label = lambda: int.from_bytes(os.urandom(16), "little")
 
 
 def garble(circuit: Circuit):
-		# The secret difference between True and False labels.
+	# The secret difference between True and False labels.
 	# Ensure color bit is set so T and F have opposite colors
 	delta = _generate_wire_label() | 1
 	# encapsulate delta in a function to invert wire labels
