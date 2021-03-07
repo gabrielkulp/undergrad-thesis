@@ -1,46 +1,41 @@
-from .key_schedule import get_keys
-from .state import State
+from . import key_schedule
+from . import state
+from . import forward
+from . import inverse
 
 def get_key_schedule(key: bytearray):
-	return get_keys(key)
+	return key_schedule.get_keys(key)
 
-def encrypt(key_schedule: tuple[tuple[bytes]], message: bytearray):
+def encrypt(keys: tuple[tuple[int]], message: bytearray):
 	# initialize
-	state = State(message)
-	state.add_round_key(key_schedule[0])
+	mat = state.from_bytes(message)
+	mat = key_schedule.add_round_key(keys[0], mat)
 
 	# main rounds loop
-	for i in range(9):
-		state.sub_bytes()
-		state.shift_rows()
-		state.mix_columns()
-		state.add_round_key(key_schedule[i+1])
+	for i in range(1,10):
+		mat = forward.sub_shift_mix(mat)
+		mat = key_schedule.add_round_key(keys[i], mat)
 	
 	# final round
-	state.sub_bytes()
-	state.shift_rows()
-	state.add_round_key(key_schedule[10])
+	mat = forward.sub_shift(mat)
+	mat = key_schedule.add_round_key(keys[10], mat)
 
-	return state.to_bytes()
+	return state.to_bytes(mat)
 
 
-def decrypt(key_schedule: tuple[tuple[bytes]], ctxt: bytearray):
+def decrypt(keys: tuple[tuple[int]], ctxt: bytearray):
 	# initialize
-	state = State(ctxt)
+	mat = state.from_bytes(ctxt)
 	
 	# first round
-	state.add_round_key(key_schedule[10])
-	state.inv_shift_rows()
-	state.inv_sub_bytes()
+	mat = key_schedule.add_round_key(keys[10], mat)
+	mat = inverse.shift_sub(mat)
 
-	for i in range(9):
-		state.add_round_key(key_schedule[9-i])
-		state.inv_mix_columns()
-		state.inv_shift_rows()
-		state.inv_sub_bytes()
+	for i in range(9,0,-1):
+		mat = key_schedule.add_round_key(keys[i], mat)
+		mat = inverse.mix_shift_sub(mat)
 	
 	# finalize
-	state.add_round_key(key_schedule[0])
+	mat = key_schedule.add_round_key(keys[0], mat)
 
-	return state.to_bytes()
-
+	return state.to_bytes(mat)
