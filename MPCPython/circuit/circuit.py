@@ -6,29 +6,24 @@ from .types import Circuit, GarbledCircuit, _Gate, _GateType
 
 #aes_key = bytearray.fromhex("00000000000000000000000000000000")
 # Placeholder hash. Replace with aes.encrypt(aes_key, bytearray(x))
-hash = lambda x: ~x[0]
+hash = lambda x: ~x
 hash_pair = lambda x, y: (hash(x)) ^ (hash(y))
-encrypt = lambda l1, l2, out:  (hash_pair(l1,l2)^out[0],  l1[1]^l2[1]^out[1])
-decrypt = lambda l1, l2, ctxt: (hash_pair(l1,l2)^ctxt[0], l1[1]^l2[1]^ctxt[1])
+c_idx = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
 
 def _generate_wire_label():
-	r = os.urandom(16)
-	label = int.from_bytes(r, "little")
-	color = random.getrandbits(1)
-	return (label, color)
+	return int.from_bytes(os.urandom(16), "little")
 
 
 def garble(circuit: Circuit):
+		# The secret difference between True and False labels.
+	# Ensure color bit is set so T and F have opposite colors
+	delta = _generate_wire_label() | 1
+	# encapsulate delta in a function to invert wire labels
+	inv_wire = lambda w: w^delta
+
 	# Build and reference array of label<->wire mappings.
 	# Index in the array is wire ID, value is False label.
 	labels = [None] * circuit.wire_count
-
-	# The secret difference between True and False labels
-	delta = _generate_wire_label()[0]
-
-	# utility functions for working with wire labels
-	inv_wire = lambda w: (w[0]^delta, 1-w[1])
-	c_idx = lambda w1,w2: 2*w1[1] + w2[1]
 
 	# The garbled truth tables for all gates
 	ctxts = list()
@@ -36,56 +31,47 @@ def garble(circuit: Circuit):
 	# generate input wire labels
 	input_labels = list()
 	for i in range(sum(circuit.input_counts)):
-		f_label = _generate_wire_label()
-		t_label = inv_wire(f_label)
-		labels[i] = f_label
-		input_labels.append((f_label,t_label))
+		label_f = _generate_wire_label()
+		label_t = inv_wire(label_f)
+		labels[i] = label_f
+		input_labels.append((label_f,label_t))
 
 	for gate in circuit.gates:
 		# compute wire labels
 		if gate.type == _GateType.XOR:
 			# free XOR means no hash/AES needed here!
-			in_1_f = labels[gate.inputs[0]]
-			in_2_f = labels[gate.inputs[1]]
-			out_f  = (in_1_f[0] ^ in_2_f[0], in_1_f[1] ^ in_2_f[1])
+			A_f = labels[gate.inputs[0]]
+			B_f = labels[gate.inputs[1]]
+			out_f  = A_f ^ B_f
 			labels[gate.id] = out_f
 			# no ctxt table to append
 		
 		elif gate.type == _GateType.AND:
 			# compute next ctxts in the array
-			in_1_f = labels[gate.inputs[0]]
-			in_2_f = labels[gate.inputs[1]]
+			A_f = labels[gate.inputs[0]]
+			B_f = labels[gate.inputs[1]]
 			out_f  = _generate_wire_label()
 			labels[gate.id] = out_f
 
-			in_1_t  = inv_wire(in_1_f)
-			in_2_t  = inv_wire(in_2_f)
+			A_t  = inv_wire(A_f)
+			B_t  = inv_wire(B_f)
 			out_t   = inv_wire(out_f)
 
 			table = (
-				( encrypt(in_1_f, in_2_f, out_f), c_idx(in_1_f, in_2_f) ),
-				( encrypt(in_1_f, in_2_t, out_f), c_idx(in_1_f, in_2_t) ),
-				( encrypt(in_1_t, in_2_f, out_f), c_idx(in_1_t, in_2_f) ),
-				( encrypt(in_1_t, in_2_t, out_t), c_idx(in_1_t, in_2_t) )
+				( hash_pair(A_f, B_f) ^ out_f, c_idx(A_f, B_f) ),
+				( hash_pair(A_f, B_t) ^ out_f, c_idx(A_f, B_t) ),
+				( hash_pair(A_t, B_f) ^ out_f, c_idx(A_t, B_f) ),
+				( hash_pair(A_t, B_t) ^ out_t, c_idx(A_t, B_t) )
 			)
 			sorted_table = sorted(table, key=lambda x: x[1])
-			ctxts.append([x[0] for x in sorted_table]) # don't append sorted colors
+			# don't append sorted colors, so just take first tuple element
+			ctxts.append([x[0] for x in sorted_table])
 		
 		elif gate.type == _GateType.INV:
+			# semantically swap input label so evaluator can treat as buffer
 			in_f = labels[gate.inputs[0]]
-			out_f = _generate_wire_label()
-			labels[gate.id] = out_f
-
-			in_t  = inv_wire(in_f)
-			out_t = inv_wire(out_f)
-
-			table = (
-				(hash(in_f) ^ out_t[0], in_f[1]^out_t[1]),
-				(hash(in_t) ^ out_f[0], in_t[1]^out_f[1])
-			)
-			sorted_table = sorted(table, key=lambda x: x[1])
-			ctxts.append(sorted_table)
-
+			labels[gate.id] = inv_wire(in_f)
+			# no ciphertext to append
 
 		else:
 			raise NotImplementedError(f"Gate type {gate.type} not garbled")
@@ -123,25 +109,24 @@ def gc_evaluate(gc: GarbledCircuit, inputs: list[int]):
 	ctxt_counter = 0
 	for gate in gc.circuit.gates:
 		if gate.type == _GateType.XOR:
-			in_1_f = active_labels[gate.inputs[0]]
-			in_2_f = active_labels[gate.inputs[1]]
-			out_f  = (in_1_f[0] ^ in_2_f[0], in_1_f[1] ^ in_2_f[1])
-			active_labels[gate.id] = out_f
+			A = active_labels[gate.inputs[0]]
+			B = active_labels[gate.inputs[1]]
+			out_label = A ^ B
+			active_labels[gate.id] = out_label
 
 
 		elif gate.type == _GateType.AND:
 			table = gc.ctxts[ctxt_counter]
 			ctxt_counter += 1
-			wire1 = active_labels[gate.inputs[0]]
-			wire2 = active_labels[gate.inputs[1]]
-			color_idx = 2*wire1[1] + wire2[1]
-			active_labels[gate.id] = decrypt(wire1, wire2, table[color_idx])
+			A = active_labels[gate.inputs[0]]
+			B = active_labels[gate.inputs[1]]
+			color_idx = c_idx(A, B)
+			active_labels[gate.id] = hash_pair(A, B) ^ table[color_idx]
 		
+		# try to factor out during garbling?
 		elif gate.type == _GateType.INV:
-			table = gc.ctxts[ctxt_counter]
-			ctxt_counter += 1
-			wire = active_labels[gate.inputs[0]]
-			active_labels[gate.id] = hash(wire) ^ table[wire[1]][0], wire[1]^table[wire[1]][1]
+			# swapped for free during garbling. Just treat as buffer
+			active_labels[gate.id] = active_labels[gate.inputs[0]]
 		
 		else:
 			raise NotImplementedError(f"Gate type {gate.type} not evaluated")
