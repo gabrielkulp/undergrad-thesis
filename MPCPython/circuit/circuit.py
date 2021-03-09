@@ -1,7 +1,7 @@
 import os # for generating wire labels with urandom
 import aes
 import random # for generating colors
-from .types import Circuit, GarbledCircuit, _Gate, _GateType
+from .types import Circuit, GarbledCircuit, GateType
 
 # faster "hash" for testing
 #hash = lambda x: ~x
@@ -39,7 +39,7 @@ def garble(circuit: Circuit):
 
 	for gate in circuit.gates:
 		# compute wire labels
-		if gate.type == _GateType.XOR:
+		if gate.type == GateType.XOR:
 			# free XOR means no hash/AES needed here!
 			A_f = labels[gate.inputs[0]]
 			B_f = labels[gate.inputs[1]]
@@ -47,7 +47,7 @@ def garble(circuit: Circuit):
 			labels[gate.id] = out_f
 			# no ctxt table to append
 
-		elif gate.type == _GateType.AND:
+		elif gate.type == GateType.AND:
 			# compute next ctxts in the array
 			A_f = labels[gate.inputs[0]]
 			B_f = labels[gate.inputs[1]]
@@ -63,6 +63,9 @@ def garble(circuit: Circuit):
 			)
 			out_f = None
 			out_t = None
+
+			# find the one with index 0 and use it to
+			# make the first ciphertext be 0 (row reduction)
 			for i in range(3):
 				if hashes[i][1] == 0:
 					out_f = hashes[i][0]
@@ -81,14 +84,19 @@ def garble(circuit: Circuit):
 				( hashes[3][0] ^ out_t, hashes[3][1] )
 			)
 			sorted_table = sorted(table, key=lambda x: x[1])
-			# don't append sorted colors, so just take first tuple element
+			# don't append sorted colors, so just take first tuple element.
+			# also don't append the first ctxt since it's zero
 			ctxts.append([x[0] for x in sorted_table[1:]])
 
-		elif gate.type == _GateType.INV:
+		elif gate.type == GateType.INV:
 			# semantically swap input label so evaluator can treat as buffer
 			in_f = labels[gate.inputs[0]]
 			labels[gate.id] = inv_wire(in_f)
 			# no ciphertext to append
+		
+		elif gate.type == GateType.EQW:
+			# buffer. Do nothing
+			labels[gate.id] = labels[gate.inputs[0]]
 
 		else:
 			raise NotImplementedError(f"Gate type {gate.type} not garbled")
@@ -125,14 +133,14 @@ def gc_evaluate(gc: GarbledCircuit, inputs: list[int]):
 
 	ctxt_counter = 0
 	for gate in gc.circuit.gates:
-		if gate.type == _GateType.XOR:
+		if gate.type == GateType.XOR:
 			A = active_labels[gate.inputs[0]]
 			B = active_labels[gate.inputs[1]]
 			out_label = A ^ B
 			active_labels[gate.id] = out_label
 
 
-		elif gate.type == _GateType.AND:
+		elif gate.type == GateType.AND:
 			table = gc.ctxts[ctxt_counter]
 			ctxt_counter += 1
 			A = active_labels[gate.inputs[0]]
@@ -143,8 +151,8 @@ def gc_evaluate(gc: GarbledCircuit, inputs: list[int]):
 			else:
 				active_labels[gate.id] = hash_pair(A, B)
 
-		elif gate.type == _GateType.INV:
-			# swapped for free during garbling. Just treat as buffer
+		elif gate.type == GateType.INV or gate.type == GateType.EQW:
+			# INV swapped for free during garbling. Just treat as buffer
 			active_labels[gate.id] = active_labels[gate.inputs[0]]
 
 		else:
@@ -178,16 +186,16 @@ def evaluate(circuit: Circuit, inputs: list[int]):
 	labels += [None] * circuit.gate_count
 
 	for gate in circuit.gates:
-		if gate.type == _GateType.XOR:
+		if gate.type == GateType.XOR:
 			labels[gate.id] = labels[gate.inputs[0]] ^ labels[gate.inputs[1]]
 
-		elif gate.type == _GateType.AND:
+		elif gate.type == GateType.AND:
 			labels[gate.id] = labels[gate.inputs[0]] & labels[gate.inputs[1]]
 
-		elif gate.type == _GateType.INV:
+		elif gate.type == GateType.INV:
 			labels[gate.id] = 1-labels[gate.inputs[0]]
 
-		elif gate.type == _GateType.EQW:
+		elif gate.type == GateType.EQW:
 			labels[gate.id] = labels[gate.inputs[0]]
 
 		else:

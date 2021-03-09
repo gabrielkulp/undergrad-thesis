@@ -1,4 +1,4 @@
-from .types import Circuit, _Gate, _GateType
+from .types import Circuit, Gate, GateType
 
 # Bristol Fashion circuit format
 # https://homes.esat.kuleuven.be/~nsmart/MPC/
@@ -45,22 +45,22 @@ def read_from_file(filename):
 			# sanity checks on the input counts so I can assume they're
 			# correct when garbling or evaluating the circuit later.
 			if line[-1] == "XOR":
-				gate_type = _GateType.XOR
+				gate_type = GateType.XOR
 				if wires_in != 2:
 					raise ValueError("XOR gates have 2 inputs")
 
 			elif line[-1] == "AND":
-				gate_type = _GateType.AND
+				gate_type = GateType.AND
 				if wires_in != 2:
 					raise ValueError("AND gates have 2 inputs")
 
 			elif line[-1] == "INV":
-				gate_type = _GateType.INV
+				gate_type = GateType.INV
 				if wires_in != 1:
 					raise ValueError("INV gates have 1 input")
 			
 			elif line[-1] == "EQW":
-				gate_type = _GateType.EQW
+				gate_type = GateType.EQW
 				if wires_in != 1:
 					raise ValueError("EQW gates have 1 input")
 
@@ -68,7 +68,7 @@ def read_from_file(filename):
 				raise NotImplementedError(f"Unknown gate type: {line[-1]}")
 			
 			# now the gate has been fully defined, so add it to the list
-			gate = _Gate(gate_type, gate_inputs, gate_id)
+			gate = Gate(gate_type, gate_inputs, gate_id)
 			circuit.gates.append(gate)
 
 	return circuit
