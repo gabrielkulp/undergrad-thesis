@@ -1,4 +1,4 @@
-def totient(p, q):
+def carmichael(p, q):
 	return lcm(p-1, q-1)
 
 def lcm(a, b):
