@@ -90,27 +90,38 @@ def test_rsa(verbose):
 
 
 import circuit
-def test_circuit():
+def test_circuit(verbose: bool):
 	inputs = [(256,2), (928374,4345), (-234,43), (-987243,-345), (-9872,-333345)]
 	
-	c = circuit.read_from_file("udivide64.txt")
-	print("read")
+	c = circuit.read_from_file("divide64.txt")
+	#c = circuit.read_from_file("circuit.txt")
+	if verbose:
+		print("\nread circuit definition\n")
 	gc = circuit.garble(c)
-	print("garbled")
+
 	for i in inputs:
-		clear = circuit.evaluate(c,i)
-		garbled = circuit.gc_evaluate(gc,i)
-		print("clear:  ", clear)
-		print("garbled:", garbled)
-		print("")
+		if verbose:
+			print("inputs: ", ", ".join(map(str,i)))
+
+		clear = circuit.plain_evaluate(c,i)
+		if verbose:
+			print("\tclear:  ", clear)
+
+		garbled = circuit.evaluate(gc,i)
+		if verbose:
+			print("\tgarbled:", garbled, '\n')
+
 		if clear != garbled:
 			return False
 	return True
 
 
 def test_all(verbose):
-	print("AES:", test_aes(verbose))
-	print("RSA:", test_rsa(verbose))
+	print("AES: ", end="", flush=True)
+	print(test_aes(verbose))
+	print("RSA: ", end="", flush=True)
+	print(test_rsa(verbose))
+	print("MPC: ", end="", flush=True)
+	print(test_circuit(verbose))
 
-test_all(False)
-test_circuit()
+test_all(True)

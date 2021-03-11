@@ -2,7 +2,7 @@ from collections import namedtuple
 
 Circuit = namedtuple("Circuit", ["input_counts", "output_counts", "gate_count", "wire_count", "gates"])
 
-GarbledCircuit = namedtuple("GarbledCircuit", ["input_labels", "ctxts", "output_map", "circuit"])
+GarbledCircuit = namedtuple("GarbledCircuit", ["input_labels", "circuit", "ctxts"])
 
 Gate = namedtuple("Gate", ["type", "inputs", "id"])
 
