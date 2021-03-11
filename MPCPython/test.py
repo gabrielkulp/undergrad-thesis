@@ -5,7 +5,7 @@ import aes
 def test_aes(verbose):
 	TestVector = namedtuple("TestVector", ["key", "plaintext", "ciphertext"])
 
-	tests = [
+	inputs = [
 		TestVector(
 			key        = bytearray.fromhex("2b7e151628aed2a6abf7158809cf4f3c"),
 			plaintext  = bytearray.fromhex("6bc1bee22e409f96e93d7e117393172a"),
@@ -58,7 +58,7 @@ def test_aes(verbose):
 		)
 	]
 
-	for test in tests:
+	for test in inputs:
 		if verbose:
 			print("key:    ", test.key.hex())
 			print("inputs: ", test.plaintext.hex(), "-e->", test.ciphertext.hex())
@@ -72,26 +72,52 @@ def test_aes(verbose):
 			print("")
 		if enc != test.ciphertext:
 			return False
-		if dec != test.plaintext:
-			return False
-		if test.plaintext != round_trip:
-			return False
+		#if dec != test.plaintext:
+		#	return False
+		#if test.plaintext != round_trip:
+		#	return False
 	return True
 
 
 import rsa
 from rsa import primes
 def test_rsa(verbose):
+	inputs = [
+		b"hello world",
+		b"foo bar",
+		b"",
+		b"Here are some non-ASCII: \x01 \x02 \x03 \xFF",
+	]
+
 	pub, priv = rsa.generate_keys(128)
-	m = b"hello world"
-	c = rsa.encrypt(int.from_bytes(m, "big"), pub)
-	m2 = rsa.decrypt(c, priv)
-	return (m2.to_bytes(len(m), "big") == m)
+	if verbose:
+		print("Generated keys\n")
+
+	for message in inputs:
+		if verbose:
+			print("Encrypting", message)
+		c = rsa.encrypt(int.from_bytes(message, "big"), pub)
+		if verbose:
+			print("Decrypting", message)
+		m2 = rsa.decrypt(c, priv)
+		success = (m2.to_bytes(len(message), "big") == message)
+		if verbose:
+			print(f"Round trip?", success, '\n')
+		if not success:
+			return False
+
+	return True
 
 
 import circuit
-def test_circuit(verbose: bool):
-	inputs = [(256,2), (928374,4345), (-234,43), (-987243,-345), (-9872,-333345)]
+def test_mpc(verbose: bool):
+	inputs = [
+		(256,2),
+		(928374,4345),
+		(-234,43),
+		(-987243,-345),
+		(-9872,-333345)
+	]
 	
 	c = circuit.read_from_file("divide64.txt")
 	#c = circuit.read_from_file("circuit.txt")
@@ -116,12 +142,22 @@ def test_circuit(verbose: bool):
 	return True
 
 
-def test_all(verbose):
-	print("AES: ", end="", flush=True)
-	print(test_aes(verbose))
-	print("RSA: ", end="", flush=True)
-	print(test_rsa(verbose))
-	print("MPC: ", end="", flush=True)
-	print(test_circuit(verbose))
+tests = [
+		# name, function, verbose
+		("AES", test_aes, False),
+		("RSA", test_rsa, False),
+		("MPC", test_mpc, True),
+	]
 
-test_all(True)
+def test_all():
+	for test in tests:
+		if test[2]: # if verbose
+			print(f"{test[0]}: ")
+		else:
+			print(f"{test[0]}: ", end="", flush=True)
+
+		# run test, print result
+		print(test[1](test[2]))
+
+if __name__ == "__main__":
+	test_all()

@@ -1,5 +1,11 @@
-from .forward import sub
-sub_word = lambda word: map(sub, word)
+from .forward import tab as sub_table
+def _sub_word(word):
+	return (
+		sub_table[word[0]],
+		sub_table[word[1]],
+		sub_table[word[2]],
+		sub_table[word[3]],
+	)
 
 # Round constants
 rc = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
@@ -30,7 +36,7 @@ def get_keys(orig_key: bytearray):
 			continue
 
 		if i % 4 == 0:
-			tmp = sub_word(_rot_word(words[i-1][:]))
+			tmp = _sub_word(_rot_word(words[i-1][:]))
 			words[i] = list(_xor3(words[i-4][:], tmp, rc_words[i//4][:]))
 			continue
 		
