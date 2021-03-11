@@ -3,25 +3,12 @@ from .types import Circuit, Gate, GateType
 # Bristol Fashion circuit format
 # https://homes.esat.kuleuven.be/~nsmart/MPC/
 
-def read_from_file(filename):
+def _read_gates(filename):
 	with open(filename, "r") as f:
-		# first line is the number of gates and the number of wires
-		gate_count, wire_count = map(int, f.readline().split())
-
-		
-		# the next line is the number of input variables, followed by the
-		# bit counts of each input. Then the same for outputs.
-		input_counts  = tuple(map(int, f.readline().split()))[1:]
-		output_counts = tuple(map(int, f.readline().split()))[1:]
-
-		# then a newline to consume
-		f.readline()
-
-		# quick sanity check: input bits + gates should be wires
-		if sum(input_counts) + gate_count != wire_count:
-			raise ValueError("Circuit metadata is inconsistent")
-
-		circuit = Circuit(input_counts, output_counts, gate_count, wire_count, list())
+		gate_count = int(f.readline().split()[0])
+		f.readline() # input counts
+		f.readline() # output counts
+		f.readline() # blank line
 
 		# next come all the gates. One line per gate
 		for _ in range(gate_count):
@@ -31,7 +18,7 @@ def read_from_file(filename):
 			wires_in  = int(line[0])
 			wires_out = int(line[1])
 			
-			# the MAND gate has multiple outputs but I don't implement it
+			# the Multiple-AND gate has more than one output, but I don't implement it
 			if wires_out != 1:
 				raise NotImplementedError("Only gates with 1 output are allowed")
 
@@ -39,7 +26,7 @@ def read_from_file(filename):
 			gate_inputs = tuple(map(int, line[2:2+wires_in]))
 			
 			# and the output wire ID is the gate ID
-			gate_id     = int(line[-2])
+			gate_id = int(line[-2])
 
 			# then the line ends with the gate name. I also included
 			# sanity checks on the input counts so I can assume they're
@@ -68,7 +55,22 @@ def read_from_file(filename):
 				raise NotImplementedError(f"Unknown gate type: {line[-1]}")
 			
 			# now the gate has been fully defined, so add it to the list
-			gate = Gate(gate_type, gate_inputs, gate_id)
-			circuit.gates.append(gate)
+			yield Gate(gate_type, gate_inputs, gate_id)
 
-	return circuit
+
+def read_from_file(filename):
+	with open(filename, "r") as f:
+		# first line is the number of gates and the number of wires
+		gate_count, wire_count = map(int, f.readline().split())
+		
+		# the next line is the number of input variables, followed by the
+		# bit counts of each input. Then the same for outputs.
+		input_counts  = tuple(map(int, f.readline().split()))[1:]
+		output_counts = tuple(map(int, f.readline().split()))[1:]
+
+	# quick sanity check: input bits + gates should be wires
+	if sum(input_counts) + gate_count != wire_count:
+		raise ValueError("Circuit metadata is inconsistent")
+
+	gates = lambda: _read_gates(filename)
+	return Circuit(input_counts, output_counts, gate_count, wire_count, gates)

@@ -37,7 +37,7 @@ def garble(circuit: Circuit):
 		labels[i] = label_f
 		input_labels.append((label_f,label_t))
 
-	for gate in circuit.gates:
+	for gate in circuit.gates():
 		# compute wire labels
 		if gate.type == GateType.XOR:
 			# free XOR means no hash/AES needed here!
@@ -132,7 +132,7 @@ def gc_evaluate(gc: GarbledCircuit, inputs: list[int]):
 	active_labels += [None] * gc.circuit.gate_count
 
 	ctxt_counter = 0
-	for gate in gc.circuit.gates:
+	for gate in gc.circuit.gates():
 		if gate.type == GateType.XOR:
 			A = active_labels[gate.inputs[0]]
 			B = active_labels[gate.inputs[1]]
@@ -180,12 +180,11 @@ def evaluate(circuit: Circuit, inputs: list[int]):
 	# first we convert the inputs into wire labels
 	for i,c in zip(inputs, circuit.input_counts):
 		input_wires = int_to_wires(i, c)
-		#print("".join(map(str,input_wires)))
 		labels += input_wires
 
 	labels += [None] * circuit.gate_count
 
-	for gate in circuit.gates:
+	for gate in circuit.gates():
 		if gate.type == GateType.XOR:
 			labels[gate.id] = labels[gate.inputs[0]] ^ labels[gate.inputs[1]]
 
@@ -201,13 +200,8 @@ def evaluate(circuit: Circuit, inputs: list[int]):
 		else:
 			raise NotImplementedError(f"Unknown gate type: {gate.type}")
 
-	#print("".join(map(str,labels[-sum(circuit.output_counts):])))
 
 	result = wires_to_int(labels[-sum(circuit.output_counts):], sum(circuit.output_counts))
-
-	#print(f"{inputs[0]} + {inputs[1]} = {inputs[0]+inputs[1]}, got {result}")
-	#print(f"-({inputs[0]}) = {-inputs[0]}, got {result}")
-	#print(f"{inputs[0]} / {inputs[1]} = {inputs[0]//inputs[1]}, got {result}")
 
 	return result
 
@@ -218,10 +212,13 @@ def int_to_wires(num: int, bits: int):
 		wires[bits-i-1] = num & 1
 		num >>= 1
 	wires.reverse()
+	#print("".join(map(str,wires)))
 	return wires
 
 
 def wires_to_int(wires: list[int], bits: int):
+	#print("".join(map(str,wires)))
+
 	wires.reverse()
 	result = 0
 
