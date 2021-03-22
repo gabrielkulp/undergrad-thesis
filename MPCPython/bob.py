@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import socket
-import ot
+import circuit
 
 # client
 
@@ -12,13 +12,17 @@ print("  --  Bob  --\n")
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 	s.connect((host, port))
 
-	choice = 0
+	print("Reading circuit file...")
+	c = circuit.read_from_file("divide64.txt")
 
-	print("Requesting message", choice)
+	print("Receiving Alice's input...")
+	inputs = [None] * sum(c.input_counts)
+	for i in range(sum(c.input_counts)):
+		inputs[i] = int.from_bytes(s.recv(16), "big")
 
-	m = ot.receive(s, choice)
+	#print("OT-ing my input...")
 
-	if m:
-		print(f"Received \"{m.decode()}\"")
-	else:
-		print("Error!")
+	print("Evaluating circuit...")
+	result = circuit.evaluate(s, c, inputs)
+
+	print("Result:", result)

@@ -133,7 +133,7 @@ def test_mpc(verbose: bool):
 		if verbose:
 			print("\tclear:  ", clear)
 
-		garbled = circuit.evaluate(gc,i)
+		garbled = circuit.local_evaluate(gc,i)
 		if verbose:
 			print("\tgarbled:", garbled, '\n')
 
@@ -142,22 +142,22 @@ def test_mpc(verbose: bool):
 	return True
 
 
+test_module = namedtuple("test_module", ["name", "function", "verbose"])
 tests = [
 		# name, function, verbose
-		("AES", test_aes, False),
-		("RSA", test_rsa, False),
-		("MPC", test_mpc, True),
+		test_module("AES", test_aes, False),
+		test_module("RSA", test_rsa, False),
+		test_module("MPC", test_mpc, True),
 	]
 
 def test_all():
 	for test in tests:
-		if test[2]: # if verbose
-			print(f"{test[0]}: ")
-		else:
-			print(f"{test[0]}: ", end="", flush=True)
+		print(f"{test.name}: ", end="", flush=True)
+		if test.verbose:
+			print('\n')
 
 		# run test, print result
-		print(test[1](test[2]))
+		print("passed" if test.function(test.verbose) else "failed")
 
 if __name__ == "__main__":
 	test_all()

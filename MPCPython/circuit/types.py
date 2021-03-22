@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-Circuit = namedtuple("Circuit", ["input_counts", "output_counts", "gate_count", "wire_count", "gates"])
+Circuit = namedtuple("Circuit", ["input_counts", "output_counts", "gate_count", "wire_count", "first_output", "gates"])
 
 GarbledCircuit = namedtuple("GarbledCircuit", ["input_labels", "circuit", "ctxts"])
 

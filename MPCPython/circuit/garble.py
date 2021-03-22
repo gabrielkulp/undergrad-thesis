@@ -2,7 +2,7 @@ import os # for generating wire labels with urandom
 import aes
 import random # for generating colors
 from .types import Circuit, GarbledCircuit, GateType
-from .circuit import hash_pair, c_idx
+from .circuit import hash_pair, c_idx, int_to_wires
 
 def _garble_gates(circuit, input_labels, inv_wire):
 	# Build and reference array of label<->wire mappings.
@@ -111,3 +111,15 @@ def garble(circuit: Circuit):
 	ctxts = lambda: _garble_gates(circuit, input_labels, inv_wire)
 
 	return GarbledCircuit(input_labels, circuit, ctxts)
+
+
+def garble_inputs(gc: GarbledCircuit, inputs: list[int]):
+	garbled_inputs = list()
+
+	for i,c in zip(inputs, gc.circuit.input_counts):
+		input_wires = int_to_wires(i, c)
+		for wire_value in input_wires:
+			label_pair = gc.input_labels[len(garbled_inputs)]
+			garbled_inputs.append(label_pair[wire_value])
+	
+	return garbled_inputs

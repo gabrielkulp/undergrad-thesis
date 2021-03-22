@@ -72,5 +72,7 @@ def read_from_file(filename):
 	if sum(input_counts) + gate_count != wire_count:
 		raise ValueError("Circuit metadata is inconsistent")
 
+	first_output =  wire_count - sum(output_counts)
+
 	gates = lambda: _read_gates(filename)
-	return Circuit(input_counts, output_counts, gate_count, wire_count, gates)
+	return Circuit(input_counts, output_counts, gate_count, wire_count, first_output, gates)
