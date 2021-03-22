@@ -30,10 +30,10 @@ def send(sock: socket, message0, message1): # Alice
 	k1 = rsa.decrypt((v - x1), privkey) % pubkey.modulo
 
 	# send both messages
-	m0 = int.from_bytes(message0, "little")
-	m1 = int.from_bytes(message1, "little")
-	sock.sendall((m0+k0).to_bytes(pubkey_size, "big"))
-	sock.sendall((m1+k1).to_bytes(pubkey_size, "big"))
+	m0 = (message0^k0)# % pubkey.modulo
+	m1 = (message1^k1)# % pubkey.modulo
+	sock.sendall((m0).to_bytes(pubkey_size, "big"))
+	sock.sendall((m1).to_bytes(pubkey_size, "big"))
 
 
 
@@ -60,11 +60,11 @@ def receive(sock: socket, choice): # Bob
 	m1 = int.from_bytes(sock.recv(pubkey_size), "big")
 
 	# decrypt the chosen value
-	mb = (m1 if choice else m0) - k
+	mb = (m1 if choice else m0) ^ k
 
 	# detect when there's a problem
 	if mb < 0:
 		return False
 
-	# it's an int, so turn it back into bytes
-	return mb.to_bytes((mb.bit_length()+7)//8, "little")
+	# return result as int
+	return mb

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 import socket
 import circuit
+import ot
 
 # server
 
 host = '127.0.0.1'
 port = 65432
+circuit_input = -234
 
 print("  --  Alice  --\n")
 
@@ -22,14 +24,16 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
 		gc = circuit.garble(c)
 
 		print("Garbling my own inputs...")
-		garbled_inputs = circuit.garble_inputs(gc, [-234, 43])
-
-		#print("OT-ing Bob's inputs...")
+		garbled_inputs = circuit.garble_inputs(gc, [circuit_input])
 
 		print("Sending my inputs...")
 		for inp in garbled_inputs:
 			s.sendall(inp.to_bytes(16, "big"))
 
+		print("OT-ing Bob's inputs...")
+		for labels in gc.input_labels[c.input_counts[0]:]:
+			ot.send(s, labels[0], labels[1])
+		
 		print("Generating and sending ctxts...")
 		ctxts = gc.ctxts()
 		for ctxt in ctxts:
