@@ -110,6 +110,7 @@ def test_rsa(verbose):
 
 
 import circuit
+import subprocess
 def test_mpc(verbose: bool):
 	inputs = [
 		(256,2),
@@ -118,12 +119,11 @@ def test_mpc(verbose: bool):
 		(-987243,-345),
 		(-9872,-333345)
 	]
-	
-	c = circuit.read_from_file("divide64.txt")
-	#c = circuit.read_from_file("circuit.txt")
+	circuit_file = "divide64.txt"
+	c = circuit.read_from_file(circuit_file)
+
 	if verbose:
-		print("\nread circuit definition\n")
-	gc = circuit.garble(c)
+		print("read circuit definition\n")
 
 	for i in inputs:
 		if verbose:
@@ -133,7 +133,17 @@ def test_mpc(verbose: bool):
 		if verbose:
 			print("\tclear:  ", clear)
 
-		garbled = circuit.local_evaluate(gc,i)
+		alice = subprocess.Popen(["./alice.py", circuit_file, str(i[0])], stdout=subprocess.PIPE, encoding="utf-8", bufsize=16)
+		subprocess.run(["sleep", ".5"]) # give Alice a moment to open the socket
+		bob = subprocess.run(["./bob.py", circuit_file, str(i[1])], capture_output=True, encoding="utf-8")
+		alice.wait()
+
+		if alice.returncode != 0 or bob.returncode != 0:
+			if verbose:
+				print("\tError in subprocess:", bob.stderr)
+			return False
+
+		garbled = int(bob.stdout.strip().split('\n')[-1])
 		if verbose:
 			print("\tgarbled:", garbled, '\n')
 

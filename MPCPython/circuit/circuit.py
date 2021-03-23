@@ -1,6 +1,19 @@
 import aes
-from .types import Circuit, GateType
+from collections import namedtuple
 
+# Types
+Circuit = namedtuple("Circuit", ["input_sizes", "output_size", "gate_count", "wire_count", "first_output", "gates"])
+
+GarbledCircuit = namedtuple("GarbledCircuit", ["input_labels", "circuit", "ctxts"])
+
+Gate = namedtuple("Gate", ["type", "inputs", "id"])
+
+def enum(**named_values):
+	return type("Enum", (), named_values)
+
+GateType = enum(XOR=0, AND=1, INV=2, EQW=3)
+
+# Utilities
 _aes_keys  = aes.get_key_schedule(bytearray.fromhex("00000000000000000000000000000000"))
 _to_bytes = lambda x: bytearray(x.to_bytes(16, "little"))
 hash_pair = lambda x, y: int.from_bytes(aes.encrypt(_aes_keys, _to_bytes(x^y)), "little")
@@ -10,18 +23,14 @@ c_idx     = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
 
 # non-cryptographic for testing
 def plain_evaluate(circuit: Circuit, inputs: list[int]):
-	if len(circuit.input_counts) != len(inputs):
-		raise ValueError("Input count doesn't match circuit")
-
+	# convert the inputs into wire labels
 	labels = list()
-
-	# first we convert the inputs into wire labels
-	for i,c in zip(inputs, circuit.input_counts):
+	for i,c in zip(inputs, circuit.input_sizes):
 		input_wires = int_to_wires(i, c)
 		labels += input_wires
-
 	labels += [None] * circuit.gate_count
 
+	# gate-wise evaluation
 	for gate in circuit.gates():
 		if gate.type == GateType.XOR:
 			labels[gate.id] = labels[gate.inputs[0]] ^ labels[gate.inputs[1]]
@@ -38,9 +47,8 @@ def plain_evaluate(circuit: Circuit, inputs: list[int]):
 		else:
 			raise NotImplementedError(f"Unknown gate type: {gate.type}")
 
-
-	result = wires_to_int(labels[-sum(circuit.output_counts):], sum(circuit.output_counts))
-
+	# interpret result
+	result = wires_to_int(labels[-circuit.output_size:], circuit.output_size)
 	return result
 
 

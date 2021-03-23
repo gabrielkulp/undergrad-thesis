@@ -1,5 +1,4 @@
-from .types import Circuit, GarbledCircuit
+from .circuit import Circuit, GarbledCircuit, plain_evaluate, int_to_wires
 from .read import read_from_file
-from .circuit import plain_evaluate, int_to_wires
-from .garble import garble, garble_inputs
-from .evaluate import local_evaluate, evaluate
+from .garble import garble, garble_first_input, send_garbler_input, send_evaluator_input, send_garbled_gates
+from .evaluate import get_garbler_input, get_evaluator_input, evaluate

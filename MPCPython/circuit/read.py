@@ -1,4 +1,4 @@
-from .types import Circuit, Gate, GateType
+from .circuit import Circuit, Gate, GateType
 
 # Bristol Fashion circuit format
 # https://homes.esat.kuleuven.be/~nsmart/MPC/
@@ -65,14 +65,14 @@ def read_from_file(filename):
 		
 		# the next line is the number of input variables, followed by the
 		# bit counts of each input. Then the same for outputs.
-		input_counts  = tuple(map(int, f.readline().split()))[1:]
-		output_counts = tuple(map(int, f.readline().split()))[1:]
+		input_sizes = tuple(map(int, f.readline().split()))[1:]
+		output_size = tuple(map(int, f.readline().split()))[1]
 
 	# quick sanity check: input bits + gates should be wires
-	if sum(input_counts) + gate_count != wire_count:
+	if sum(input_sizes) + gate_count != wire_count:
 		raise ValueError("Circuit metadata is inconsistent")
 
-	first_output =  wire_count - sum(output_counts)
+	first_output =  wire_count - output_size
 
 	gates = lambda: _read_gates(filename)
-	return Circuit(input_counts, output_counts, gate_count, wire_count, first_output, gates)
+	return Circuit(input_sizes, output_size, gate_count, wire_count, first_output, gates)

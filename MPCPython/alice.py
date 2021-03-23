@@ -1,54 +1,41 @@
 #!/usr/bin/env python3
-import socket
-import circuit
-import ot
+import socket, sys
+import circuit, ot
 
-# server
+# garbler (server)
+# test.py executes this script and reads its exit code
 
-host = '127.0.0.1'
+host = "0.0.0.0"
 port = 65432
-circuit_input = -234
+circuit_name  = sys.argv[1]
+circuit_input = int(sys.argv[2])
 
 print("  --  Alice  --\n")
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
 	sock.bind((host, port))
 	sock.listen()
+	print("Listening...")
 	conn, addr = sock.accept()
 
 	with conn as s:
 		print("Reading circuit file...")
-		c = circuit.read_from_file("divide64.txt")
+		c = circuit.read_from_file(circuit_name)
 
 		print("Generating input labels...")
 		gc = circuit.garble(c)
 
 		print("Garbling my own inputs...")
-		garbled_inputs = circuit.garble_inputs(gc, [circuit_input])
+		garbled_inputs = circuit.garble_first_input(gc, circuit_input)
 
 		print("Sending my inputs...")
-		for inp in garbled_inputs:
-			s.sendall(inp.to_bytes(16, "big"))
+		circuit.send_garbler_input(s, garbled_inputs)
 
 		print("OT-ing Bob's inputs...")
-		for labels in gc.input_labels[c.input_counts[0]:]:
-			ot.send(s, labels[0], labels[1])
+		circuit.send_evaluator_input(s, gc)
 		
 		print("Generating and sending ctxts...")
-		ctxts = gc.ctxts()
-		for ctxt in ctxts:
-			if ctxt == None:
-				s.sendall(bytes(16))
-				break
-			s.sendall(ctxt[0].to_bytes(16, "big"))
-			s.sendall(ctxt[1].to_bytes(16, "big"))
-			s.sendall(ctxt[2].to_bytes(16, "big"))
+		circuit.send_garbled_gates(s, gc)
 
-		print("Generating and sending output map...")
-		output_map = next(ctxts)
-
-		for output in output_map:
-			s.sendall(output.to_bytes(16, "big"))
-		
 		s.recv(1) # listen for client close
 		print("Done!")

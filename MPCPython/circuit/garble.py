@@ -1,15 +1,67 @@
 import os # for generating wire labels with urandom
 import aes
 import random # for generating colors
-from .types import Circuit, GarbledCircuit, GateType
-from .circuit import hash_pair, c_idx, int_to_wires
+import ot
+from socket import socket
+from .circuit import Circuit, GarbledCircuit, GateType, hash_pair, c_idx, int_to_wires
+
+
+def garble_first_input(gc: GarbledCircuit, inp: int):
+	garbled_inputs = list()
+
+	input_wires = int_to_wires(inp, gc.circuit.input_sizes[0])
+	for wire_value in input_wires:
+		label_pair = gc.input_labels[len(garbled_inputs)]
+		garbled_inputs.append(label_pair[wire_value])
+
+	return garbled_inputs
+
+
+def send_garbler_input(sock: socket, garbled_inputs: list[int]):
+	for inp in garbled_inputs:
+			sock.sendall(inp.to_bytes(16, "big"))
+
+
+def send_evaluator_input(sock: socket, gc: GarbledCircuit):
+	for labels in gc.input_labels[gc.circuit.input_sizes[0]:]:
+		ot.send(sock, labels[0], labels[1])
+
+def garble(circuit: Circuit):
+	# generate random labels
+	_generate_wire_label = lambda: int.from_bytes(os.urandom(16), "little")
+
+	# The secret difference between True and False labels.
+	# Ensure color bit is set so T and F have opposite colors
+	delta = _generate_wire_label() | 1
+
+	# encapsulate delta in a function to invert wire labels
+	inv_wire = lambda w: w^delta
+
+	# generate input wire labels
+	input_labels = list()
+	for _ in range(sum(circuit.input_sizes)):
+		label_f = _generate_wire_label()
+		label_t = inv_wire(label_f)
+		input_labels.append((label_f,label_t))
+
+	# set up generator to produce ciphertexts
+	ctxts = lambda: _garble_gates(circuit, input_labels, inv_wire)
+
+	return GarbledCircuit(input_labels, circuit, ctxts)
+
+
+def send_garbled_gates(sock: socket, gc: GarbledCircuit):
+	ctxts = gc.ctxts()
+	for ctxt in ctxts:
+		sock.sendall(ctxt.to_bytes(16, "big"))
+
 
 def _garble_gates(circuit, input_labels, inv_wire):
 	# Build and reference array of label<->wire mappings.
 	# Index in the array is wire ID, value is False label.
 	labels = [None] * circuit.wire_count
 
-	for i in range(sum(circuit.input_counts)):
+	for i in range(sum(circuit.input_sizes)):
 		labels[i] = input_labels[i][0] # add false label
 
 	for gate in circuit.gates():
@@ -61,7 +113,8 @@ def _garble_gates(circuit, input_labels, inv_wire):
 			sorted_table = sorted(table, key=lambda x: x[1])
 			# don't append sorted colors, so just take first tuple element.
 			# also don't append the first ctxt since it's zero
-			yield [x[0] for x in sorted_table[1:]]
+			for x in sorted_table[1:]:
+				yield x[0]
 
 		elif gate.type == GateType.INV:
 			# semantically swap input label so evaluator can treat as buffer
@@ -76,50 +129,8 @@ def _garble_gates(circuit, input_labels, inv_wire):
 		else:
 			raise NotImplementedError(f"Gate type {gate.type} not garbled")
 
-	yield None # signal that the ctxt generation is done
-
 	# now generate the output map
-	output_map = list()
-	first_output_wire = circuit.wire_count - sum(circuit.output_counts)
-
+	first_output_wire = circuit.wire_count - circuit.output_size
 	for wire in range(first_output_wire, circuit.wire_count):
 		# record mapping of output wire IDs to output labels
-		output_map.append(hash(labels[wire]))
-
-	yield output_map
-
-
-def garble(circuit: Circuit):
-	# generate random labels
-	_generate_wire_label = lambda: int.from_bytes(os.urandom(16), "little")
-
-	# The secret difference between True and False labels.
-	# Ensure color bit is set so T and F have opposite colors
-	delta = _generate_wire_label() | 1
-
-	# encapsulate delta in a function to invert wire labels
-	inv_wire = lambda w: w^delta
-
-	# generate input wire labels
-	input_labels = list()
-	for _ in range(sum(circuit.input_counts)):
-		label_f = _generate_wire_label()
-		label_t = inv_wire(label_f)
-		input_labels.append((label_f,label_t))
-
-	# set up generator to produce ciphertexts
-	ctxts = lambda: _garble_gates(circuit, input_labels, inv_wire)
-
-	return GarbledCircuit(input_labels, circuit, ctxts)
-
-
-def garble_inputs(gc: GarbledCircuit, inputs: list[int]):
-	garbled_inputs = list()
-
-	for i,c in zip(inputs, gc.circuit.input_counts):
-		input_wires = int_to_wires(i, c)
-		for wire_value in input_wires:
-			label_pair = gc.input_labels[len(garbled_inputs)]
-			garbled_inputs.append(label_pair[wire_value])
-	
-	return garbled_inputs
+		yield hash(labels[wire])
