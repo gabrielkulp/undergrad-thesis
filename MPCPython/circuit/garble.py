@@ -6,25 +6,17 @@ from socket import socket
 from .circuit import Circuit, GarbledCircuit, GateType, hash_pair, c_idx, int_to_wires
 
 
-def garble_first_input(gc: GarbledCircuit, inp: int):
-	garbled_inputs = list()
-
+def send_garbler_input(sock: socket, gc: GarbledCircuit, inp: int):
 	input_wires = int_to_wires(inp, gc.circuit.input_sizes[0])
-	for wire_value in input_wires:
-		label_pair = gc.input_labels[len(garbled_inputs)]
-		garbled_inputs.append(label_pair[wire_value])
-
-	return garbled_inputs
-
-
-def send_garbler_input(sock: socket, garbled_inputs: list[int]):
-	for inp in garbled_inputs:
-			sock.sendall(inp.to_bytes(16, "big"))
+	for wire_value, label_pair in zip(input_wires, gc.input_labels):
+		active_label = label_pair[wire_value]
+		sock.sendall(active_label.to_bytes(16, "big"))
 
 
 def send_evaluator_input(sock: socket, gc: GarbledCircuit):
 	for labels in gc.input_labels[gc.circuit.input_sizes[0]:]:
 		ot.send(sock, labels[0], labels[1])
+
 
 def garble(circuit: Circuit):
 	# generate random labels
