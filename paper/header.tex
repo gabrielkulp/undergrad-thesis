@@ -1,0 +1,24 @@
+\documentclass[11pt, letterpaper]{article}
+\usepackage[margin=4cm]{geometry}
+\usepackage[style=ieee]{biblatex}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+\addbibresource{references.bib}
+
+\author{Gabriel Kulp}
+\title{Mobile Cryptographic Co-Processor for Privacy-Preserving Two-Party Computation}
+
+\makeatletter
+\hypersetup{ % set PDF metadata
+	pdftitle={\@title},
+	pdfauthor={\@author},
+	pdfsubject={CS 462},
+	pdfkeywords={Thesis, Capstone, MPC, Garbled Circuits, FPGA, Cryptography, iCEBreaker}
+}
+\makeatother
+
+\newcommand{\comment}[1]{{\color{red}\textit{#1}}}
+
+\usepackage{marginnote,xspace}
+\newcommand{\sidecomment}[1]{\xspace{\color{red}(c$\rightarrow$)}\marginnote{\color{red} #1}\xspace}

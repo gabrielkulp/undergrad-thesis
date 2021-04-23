@@ -1,0 +1,12 @@
+\section{Background}
+
+\subsection{Circuits}
+
+\subsection{Garbled Circuits}
+
+\subsection{Yao's Garbled Circuits}
+In the garbled circuits protocol, functions are represented as boolean circuits. I evaluate these circuits with Yao's Garbled Circuits, a secure MPC protocol described in a series of presentations by Andrew Yao in 1986\cite{YaoGC}. In the most basic terms, one party ``garbles'' the circuit by encrypting and transposing the inputs to each logic gate and bakes in their inputs, then sends the stream of garbled gates to a second party, who evaluates the garbled circuit with their own private inputs while learning nothing about the garbler's inputs.
+
+This presents an asymmetry in which one party must calculate each node of the circuit for all inputs and broadcast a high volume of information while the other party performs about half the work and only sends back data about the inputs and outputs. This asymmetry is similar to the current cloud-computing model, where servers in data centers perform difficult calculations while the client does minimal work to interpret the result.
+
+There have been several improvements to Yao's original protocol since it was published. The most recent at the time of writing is called Half Gates\cite{HalfGates}, which reduces the data sent from the garbler to the evaluator by short-circuiting AND gates to encode either buffers or inverters depending on each party's known inputs to that gate.

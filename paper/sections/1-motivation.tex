@@ -1,0 +1,13 @@
+\section{Motivation and Scope}
+
+\subsection{Motivation}
+In the modern cloud-computing model, providers compute on client data using proprietary algorithms. When clients send data to be processed, it is also available to the service provider for logging and analysis. This violation of privacy serves as a building block of the world of commercial machine learning. MPC provides a cryptographic solution to this problem, removing the need to share data or trust a third party, while still providing a mechanism to perform the same computation, provided that both parties support it.
+
+One obstacle to widespread adoption of MPC is the poor efficiency of execution. The protocol's overhead slows the computation by several orders of magnitude. To address this, I propose a trusted coprocessor to accelerate the client's workload. \sidecomment{this is content that should be in the margin.}This coprocessor is attached to a mobile device (smartphone) to handle the most power-hungry aspects of the calculation more efficiently than the phone's built-in SoC (system on chip).
+
+Support for efficient MPC in mobile devices could open the doors to many other privacy- and security-focused improvements to how our computers communicate. For example, a user could evaluate a pre-trained machine learning model without revealing their data to the service provider and without the service provider revealing their model\cite{NeuralNets}. This would allow a user to take a photograph and have it classified by a private algorithm without providing the image in the clear to the owner of the algorithm.
+
+\comment{Problem Statement}
+
+\subsection{Scope}
+I implemented \comment{(will implement)} Yao's Garbled Circuits with half-gates in software, and compare its system resource utilization (CPU time and RAM usage) and power consumption to a second, interoperable implementation that interfaces with an FPGA\@. It is out of scope to draw comparisons to other implementations or design a polished user interface.

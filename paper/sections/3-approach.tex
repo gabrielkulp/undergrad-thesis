@@ -1,0 +1,14 @@
+\section{Approach}
+
+\subsection{Algorithm}
+
+\subsection{Protocol}
+
+\subsection{Software}
+
+\subsection{Hardware}
+I chose the Pine64 PinePhone for the mobile platform since it fully supports Linux, allowing me to use the same source code for the mobile and server sides of the protocol. The PinePhone also includes a USB port accessible to userspace tools just like a laptop. I chose the iCEBreaker FPGA development board (Lattice iCE40) for its low cost, open-source board design, open-source toolchain, and accessible community.
+
+Most current research focuses on communication between data centers or between a client and the cloud. My project focuses on lower-power devices for which hardware acceleration is the only viable option to maintain reasonable power efficiency. Power draw (measured by battery life) is therefore the point of comparison for the software-only and FPGA implementations.
+
+I have selected the Lattice ICE40 FPGA; a promising low-cost low-power chip that has an open-source toolchain available. I would rather not rely on closed-source pre-designed components (IP cores), which would impede auditing the whole system. Audits of the full source code should be easy in a security-focused application like this one. Also, I don't need the added convenience of drop-in solutions; since I only intend to communicate with the FPGA over SPI, I don't need to worry about how to implement high-complexity components such as Ethernet controllers.

@@ -1,0 +1,32 @@
+% Title page
+\makeatletter
+\begin{titlepage}
+	\begin{center}
+		\vspace*{4cm}
+
+		\huge
+		\@title
+
+		\vspace*{2cm}
+
+		\large
+		\@author
+
+		\vfill
+		
+		An Undergraduate Thesis
+		\vspace*{2cm}
+	\end{center}
+\end{titlepage}
+\makeatother
+
+
+
+% Second page
+\tableofcontents
+
+\vfill
+
+\begin{abstract}
+Multi-party computation (MPC) is a cryptographic protocol that allows parties to learn the output of some function of their private inputs without trusting a third party to perform the computation. This is usually done at a large scale between data centers, with little emphasis on individuals' devices or mobile hardware. In this paper, I present a proof-of-concept implementation of two-party computation on a commodity smartphone paired with a low-power FPGA\@. I compare the performance and power consumption of the system with a software-only setup and with the FPGA connected for acceleration.
+\end{abstract}
