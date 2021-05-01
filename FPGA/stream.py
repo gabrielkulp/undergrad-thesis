@@ -108,13 +108,13 @@ def main():
 	#gate_def = [gate_type] + id_1 + id_2 + ctxts + [x+1 for x in ctxts] + [(2*x)%256 for x in ctxts]
 
 	fpga.send_bytes(0, bytearray([0]*16))
-	time.sleep(0.1)
-	print("received:", " ".join(["{:02x}".format(b) for b in fpga.send_bytes(1,[x for x in range(20)])[5:]]))
+	time.sleep(0.2)
+	print("received:", " ".join(["{:02x}".format(b) for b in fpga.send_bytes(1,[x for x in range(26)])[11:]]))
 	print("expected:", "c6 a1 3b 37 87 8f 5b 82 6f 4f 81 62 a1 c8 d8 79")
 
 	fpga.send_bytes(0, bytearray(ctxts))
-	time.sleep(0.1)
-	print("received:", " ".join(["{:02x}".format(b) for b in fpga.send_bytes(1,[x for x in range(20)])[5:]]))
+	time.sleep(0.2)
+	print("received:", " ".join(["{:02x}".format(b) for b in fpga.send_bytes(1,[x for x in range(26)])[11:]]))
 	print("expected:", "b9 32 b1 5b a3 7b 86 44 08 30 cc 5f 21 6a 3b f5")
 
 

@@ -47,6 +47,8 @@ module spi_fast (
 	output reg  strobe,
 
 	input  wire [7:0] out,
+	output wire out_first,
+	output wire out_next,
 
 	// Clock / Reset
 	input  wire  clk,
@@ -62,6 +64,8 @@ module spi_fast (
 
 	wire [7:0] core_in_data;
 	wire core_in_ack;
+	assign out_next = core_in_ack;
+	assign out_first = tx_first;
 
 	wire csn_state;
 	wire csn_rise;

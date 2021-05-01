@@ -8,7 +8,6 @@ module aes (
 );
 	// main AES state and its flattened output
 	reg [31:0] aes_state [3:0];
-	reg [31:0] aes_prev  [1:0];
 
 	assign state_final[0  +:32] = aes_state[0];
 	assign state_final[32 +:32] = aes_state[1];
@@ -78,9 +77,6 @@ module aes (
 				WAIT: begin
 					curr_state <= next_state;
 					column <= column + 2;
-
-					aes_prev[0] <= aes_state[0];
-					aes_prev[1] <= aes_state[1];
 
 					// load addressed for columns 2 and 3
 					t_addr_a[0] <= aes_state[2][ 0+:8];

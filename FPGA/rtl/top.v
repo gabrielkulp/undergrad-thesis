@@ -42,10 +42,10 @@ module top (
 
 	// user I/O
 	output wire [4:0] LEDs,
-	input  wire [3:0] BTNs,
+	//input  wire [3:0] BTNs,
 
-//	output wire [7:0] PMOD_1A,
-//	input  wire [7:0] PMOD_1B,
+	output wire [7:0] PMOD_1A,
+	input  wire [7:0] PMOD_1B,
 	input  wire clk_12m
 );
 	assign LEDs = 0;
@@ -60,6 +60,8 @@ module top (
 	wire strobe_last;
 	wire strobe_data;
 	reg [7:0] spi_out;
+	wire spi_out_first;
+	wire spi_out_next;
 	spi_fast spi_I (
 		.spi_mosi(slave_mosi),
 		.spi_miso(slave_miso),
@@ -71,11 +73,13 @@ module top (
 		.last(strobe_last),
 		.strobe(strobe_data),
 		.out(spi_out),
+		.out_first(spi_out_first),
+		.out_next(spi_out_next),
 		.clk(clk),
 		.rst(rst)
 	);
 	reg [3:0] in_counter;
-	reg [3:0] out_counter;
+	reg [4:0] out_counter;
 	always @ (posedge clk) begin
 		if (strobe_data) begin
 			if (spi_cmd == 0) begin
@@ -86,15 +90,14 @@ module top (
 					in_counter <= in_counter + 1;
 					recv_buffer[in_counter*8 +:8] <= spi_data;
 				end
-			end else begin
-				if (strobe_first) begin
-					out_counter <= 1;
-					spi_out <= reply_buffer[0+:8];
-				end else begin
-					out_counter <= out_counter + 1;
-					spi_out <= reply_buffer[out_counter*8 +:8];
-				end
 			end
+		end
+		if (spi_out_next) begin
+			out_counter <= out_counter + 1;
+			spi_out <= reply_buffer[out_counter*8 +:8];
+		end else if (rst | strobe_last) begin
+			out_counter <= -2-6;
+			spi_out <= reply_buffer[0+:8];
 		end
 	end
 
@@ -116,10 +119,38 @@ module top (
 		else
 			aes_start <= 0;
 	end
-
-
-
+	seven_seg disp_I (
+		.clk(clk),
+		.inp(reply_buffer[PMOD_1B*8 +:8]),
+		.pmod(PMOD_1A)
+	);
 /*
+	wire read;
+	wire write;
+
+	hram hyperram (
+	input         .i_clk(clk),
+	input         .i_rstn(rst),
+
+	input         .i_cfg_access(0),
+	input         .i_mem_valid(),
+	output        .o_mem_ready(),
+	input  [ 3:0] .i_mem_wstrb(),
+	input  [31:0] .i_mem_addr(),
+	input  [31:0] .i_mem_wdata(),
+	output [31:0] .o_mem_rdata(),
+
+	output        .o_csn0(),
+	output        .o_csn1(),
+	output        .o_clk(),
+	output        .o_clkn(),
+	inout  [7:0]  .io_dq(PMOD_1B),
+	inout         .io_rwds(PMOD_1A),
+	output        .o_resetn(),
+	);
+
+
+
 	wire gate_strobe;
 	wire id_1_strobe;
 	wire id_2_strobe;
