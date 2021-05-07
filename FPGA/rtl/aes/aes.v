@@ -45,7 +45,7 @@ module aes (
 	// main FSM
 	reg [2:0] curr_state;
 	reg [2:0] next_state;
-	localparam WAIT  = -1;
+	localparam BUBBLE = -1;
 	localparam IDLE  = 0;
 	localparam INIT  = 1;
 	localparam ROUND = 2;
@@ -66,7 +66,7 @@ module aes (
 						aes_state[2] <= state_init[2*32 +:32];
 						aes_state[3] <= state_init[3*32 +:32];
 
-						curr_state <= WAIT;
+						curr_state <= BUBBLE;
 						next_state <= INIT;
 						column <= 0;
 						round  <= 0;
@@ -74,7 +74,7 @@ module aes (
 					end
 				end
 
-				WAIT: begin
+				BUBBLE: begin
 					curr_state <= next_state;
 					column <= column + 2;
 
@@ -101,7 +101,7 @@ module aes (
 						aes_state[2][31:0] <= aes_state[2] ^ key_a;
 						aes_state[3][31:0] <= aes_state[3] ^ key_b;
 
-						curr_state <= WAIT;
+						curr_state <= BUBBLE;
 						next_state <= ROUND;
 
 						// load addresses for columns 0 and 1
@@ -139,7 +139,7 @@ module aes (
 						t_addr_b[3] <= aes_state[0][24+:8];
 
 						round <= round + 1;
-						curr_state <= WAIT;
+						curr_state <= BUBBLE;
 						next_state <= (round == 9) ? FINAL : ROUND;
 					end
 				end

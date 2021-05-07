@@ -14,9 +14,9 @@ def enum(**named_values):
 GateType = enum(XOR=0, AND=1, INV=2, EQW=3)
 
 # Utilities
-_aes_keys  = aes.get_key_schedule(bytearray.fromhex("00000000000000000000000000000000"))
+_aes_keys  = aes.get_key_schedule(bytearray.fromhex("000102030405060708090a0b0c0d0e0f"))
 _to_bytes = lambda x: bytearray(x.to_bytes(16, "little"))
-hash_pair = lambda x, y: int.from_bytes(aes.encrypt(_aes_keys, _to_bytes(x^y)), "little")
+hash_pair = lambda x, y: int.from_bytes(aes.encrypt(_aes_keys, _to_bytes((x*2)^(y*2))), "little")
 
 c_idx     = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
 
