@@ -42,13 +42,13 @@ module top (
 
 	// user I/O
 	output wire [4:0] LEDs,
-	//input  wire [3:0] BTNs,
+	input  wire [3:0] BTNs,
 
 	output wire [7:0] PMOD_1A,
 	input  wire [7:0] PMOD_1B,
 	input  wire clk_12m
 );
-	assign LEDs = 0;
+	//assign LEDs = 0;
 
 	wire clk;
 	wire clk_2x;
@@ -78,87 +78,93 @@ module top (
 		.clk(clk),
 		.rst(rst)
 	);
-	reg [3:0] in_counter;
+
+	localparam CMD_ADDR = 0;
+	localparam CMD_DATA = 1; // store to ram
+	localparam CMD_READ = 2; // read from ram
+
+	reg [4:0] in_counter;
 	reg [4:0] out_counter;
 	always @ (posedge clk) begin
-		if (strobe_data) begin
-			if (spi_cmd == 0) begin
+		if (strobe_data) begin // receive plaintext
+			if (spi_cmd == CMD_ADDR) begin
 				if (strobe_first) begin
 					in_counter <= 1;
-					recv_buffer[0+:8] <= spi_data;
+					recv_addr[0+:8] <= spi_data;
 				end else begin
 					in_counter <= in_counter + 1;
-					recv_buffer[in_counter*8 +:8] <= spi_data;
+					recv_addr[in_counter*8 +:8] <= spi_data;
+				end
+			end else if (spi_cmd == CMD_DATA) begin
+				if (strobe_first) begin
+					in_counter <= 1;
+					recv_data[0+:8] <= spi_data;
+				end else begin
+					in_counter <= in_counter + 1;
+					recv_data[in_counter*8 +:8] <= spi_data;
 				end
 			end
 		end
-		if (spi_out_next) begin
+		if (spi_out_next) begin // send ciphertext
 			out_counter <= out_counter + 1;
-			spi_out <= reply_buffer[out_counter*8 +:8];
-		end else if (rst | strobe_last) begin
-			out_counter <= -2-6;
-			spi_out <= reply_buffer[0+:8];
+			spi_out     <= send_data[out_counter*8 +:8];
+		end else if (rst || strobe_last) begin
+			out_counter <= -2-6; // 6 bytes of extra padding
+			spi_out     <= send_data[0+:8];
 		end
 	end
 
-	reg [127:0] recv_buffer;
-	reg [127:0] reply_buffer;
-	wire done;
-	reg aes_start;
-	aes aes_I (
+	reg  [ 23:0] recv_addr;
+	reg  [127:0] recv_data;
+	wire [127:0] send_data;
+/*	wire aes_done;
+	reg  aes_start;
+	aes  enc (
 		.clk(clk),
 		.rst(rst),
 		.start(aes_start),
-		.done(done),
-		.state_init(recv_buffer),
-		.state_final(reply_buffer)
+		.done(aes_done),
+		.state_init(recv_data),
+		.state_final(send_data)
 	);
 	always @ (posedge clk) begin
-		if (strobe_last && spi_cmd==0)
+		if (strobe_last && spi_cmd==1)
 			aes_start <= 1;
 		else
 			aes_start <= 0;
 	end
-	seven_seg disp_I (
+*/
+	wire wr_en;
+	assign wr_en = (spi_cmd == CMD_DATA);
+	assign LEDs = {4'b0, wr_en};
+
+	label_array wl (
 		.clk(clk),
-		.inp(reply_buffer[PMOD_1B*8 +:8]),
+		.rst(rst | strobe_first),
+		.wire_id(recv_addr),
+		.id_strobe(strobe_last),
+		.wr_en(wr_en),
+		.label_in(recv_data),
+		.label_out(send_data),
+		.done()
+	);
+
+	seven_seg ss(
+		.clk(clk),
+		.inp(send_data[PMOD_1B*8 +:8]),
 		.pmod(PMOD_1A)
 	);
 /*
-	wire read;
-	wire write;
-
-	hram hyperram (
-	input         .i_clk(clk),
-	input         .i_rstn(rst),
-
-	input         .i_cfg_access(0),
-	input         .i_mem_valid(),
-	output        .o_mem_ready(),
-	input  [ 3:0] .i_mem_wstrb(),
-	input  [31:0] .i_mem_addr(),
-	input  [31:0] .i_mem_wdata(),
-	output [31:0] .o_mem_rdata(),
-
-	output        .o_csn0(),
-	output        .o_csn1(),
-	output        .o_clk(),
-	output        .o_clkn(),
-	inout  [7:0]  .io_dq(PMOD_1B),
-	inout         .io_rwds(PMOD_1A),
-	output        .o_resetn(),
-	);
-
-
-
 	wire gate_strobe;
 	wire id_1_strobe;
 	wire id_2_strobe;
 	wire ctxt_strobe;
+	wire gate_id_strobe;
 	wire [1:0] gate_type;
 	wire [23:0] id_1;
 	wire [23:0] id_2;
 	wire [7:0] ctxt_byte;
+	wire [23:0] gate_id;
 	spi_decoder spi_d_I (
 		.input_data(spi_data),
 		.input_command(spi_cmd),
@@ -168,10 +174,12 @@ module top (
 		.id_1(id_1),
 		.id_2(id_2),
 		.ctxt_byte(ctxt_byte),
+		.gate_id(gate_id),
 		.gate_strobe(gate_strobe),
 		.id_1_strobe(id_1_strobe),
 		.id_2_strobe(id_2_strobe),
 		.ctxt_strobe(ctxt_strobe),
+		.gate_id_strobe(gate_id_strobe),
 
 		.clk(clk),
 		.rst(rst)
@@ -186,12 +194,6 @@ module top (
 
 		.read_addr(BTNs[2:1]+1),
 		.read_data(read_data)
-	);
-
-	seven_seg disp_I (
-		.clk(clk),
-		.inp(counter),
-		.pmod(PMOD_1A)
 	);
 */
 

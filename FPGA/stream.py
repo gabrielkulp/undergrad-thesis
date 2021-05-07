@@ -32,10 +32,19 @@ class FPGA_connection():
 	
 	def send_byte(self, data: int) -> None:
 		self.slave.exchange(bytearray([0, data]))
+	
+	def duplex_bytes(self, cmd: int, data: list) -> list:
+		return self.slave.exchange(bytearray([cmd]) + bytearray(data), duplex=True)
 
-	def send_bytes(self, addr: int, data: list) -> None:
-		return self.slave.exchange(bytearray([addr]) + bytearray(data), duplex=True)
+	def send_bytes(self, cmd: int, data: list) -> None:
+		self.slave.exchange(bytearray([cmd]) + bytearray(data), duplex=False)
+	
+	def recv_bytes(self, cmd: int, length: int) -> list:
+		padding = 6
+		data = [x for x in range(length+4+padding)]
+		return self.slave.exchange(bytearray([cmd]) + bytearray(data), duplex=True)[5+padding:]
 
+pretty = lambda l: " ".join(["{:02x}".format(x) for x in l])
 
 def get_connection():
 	try:
@@ -82,40 +91,89 @@ def console():
 	if not fpga:
 		return 1
 	
+	print("format: cmd, data")
+
 	while True:
 		try:
 			inp = input("fpga > ")
 		except EOFError:
 			return
 		try:
-			ret = fpga.send_bytes(1,eval(inp))
-			print(" ".join(["{:02x}".format(x) for x in ret]))
+			(cmd, dat) = eval('('+inp+')')
+			ret = fpga.duplex_bytes(cmd, dat)
+			print(pretty(ret))
 		except Exception as e:
 			print("error:" + str(e))
 
+
+def aes_test():
+	fpga = get_connection()
+	if not fpga:
+		return 1
+
+	fpga.send_bytes(1, bytearray([0]*16))
+	time.sleep(0.2)
+	print("\nreceived:", pretty(fpga.recv_bytes(2,16)))
+	print("expected: c6 a1 3b 37 87 8f 5b 82 6f 4f 81 62 a1 c8 d8 79\n")
+
+	fpga.send_bytes(1, bytearray.fromhex("66217c17175db79ea159514bbeef6072"))
+	time.sleep(0.2)
+	print("received:", pretty(fpga.recv_bytes(2,16)))
+	print("expected: b9 32 b1 5b a3 7b 86 44 08 30 cc 5f 21 6a 3b f5")
+
+
+def gate_test():
+	fpga = get_connection()
+	if not fpga:
+		return 1
+	gate_type = 0
+	id_1 = [0x12, 0x34, 0x56]
+	id_2 = [0x78, 0x9a, 0xbc]
+	ctxts = list(bytearray.fromhex("66217c17175db79ea159514bbeef6072"))
+	gate_id = [0,0,1]
+
+	gate_def = [gate_type] + id_1 + id_2 + ctxts + [x+1 for x in ctxts] + [(2*x)%256 for x in ctxts] + gate_id
+
+	fpga.send_bytes(1, gate_def)
 
 
 def main():
 	fpga = get_connection()
 	if not fpga:
 		return 1
+	
+	cmd_addr = 0
+	cmd_data = 1
+	cmd_read = 2
 
-	#gate_type = 0
-	#id_1 = [0x12, 0x34, 0x56]
-	#id_2 = [0x78, 0x9a, 0xbc]
-	ctxts = [0x66, 0x21, 0x7c, 0x17, 0x17, 0x5d, 0xb7, 0x9e, 0xa1, 0x59, 0x51, 0x4b, 0xbe, 0xef, 0x60, 0x72]
+	# send first address
+	fpga.send_bytes(cmd_addr, [3,2,1])
 
-	#gate_def = [gate_type] + id_1 + id_2 + ctxts + [x+1 for x in ctxts] + [(2*x)%256 for x in ctxts]
+	# send first data
+	fpga.send_bytes(cmd_data, [2*x for x in range(16)])
 
-	fpga.send_bytes(0, bytearray([0]*16))
-	time.sleep(0.2)
-	print("received:", " ".join(["{:02x}".format(b) for b in fpga.send_bytes(1,[x for x in range(26)])[11:]]))
-	print("expected:", "c6 a1 3b 37 87 8f 5b 82 6f 4f 81 62 a1 c8 d8 79")
 
-	fpga.send_bytes(0, bytearray(ctxts))
-	time.sleep(0.2)
-	print("received:", " ".join(["{:02x}".format(b) for b in fpga.send_bytes(1,[x for x in range(26)])[11:]]))
-	print("expected:", "b9 32 b1 5b a3 7b 86 44 08 30 cc 5f 21 6a 3b f5")
+	# send second address
+	fpga.send_bytes(cmd_addr, [4,2,1])
+
+	# send second data
+	fpga.send_bytes(cmd_data, list(bytearray.fromhex("66217c17175db79ea159514bbeef6072")))
+
+
+	# send first address
+	fpga.send_bytes(cmd_addr, [3,2,1])
+
+	# read first data
+	res = fpga.recv_bytes(cmd_read, 16)
+	print("received:", pretty(res))
+
+
+	# send second address
+	fpga.send_bytes(cmd_addr, [4,2,1])
+
+	# read second data
+	res = fpga.recv_bytes(cmd_read, 16)
+	print("received:", pretty(res))
 
 
 if __name__ == '__main__':
