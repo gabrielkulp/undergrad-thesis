@@ -1,3 +1,4 @@
+`default_nettype none
 // uses 2 BRAMs
 module key_schedule (
 	input  wire clk,

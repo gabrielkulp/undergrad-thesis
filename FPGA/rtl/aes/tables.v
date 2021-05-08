@@ -1,3 +1,4 @@
+`default_nettype none
 // uses 8 BRAMs
 module tables (
 	input  wire clk,
