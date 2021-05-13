@@ -3,7 +3,7 @@ from pyftdi.spi import SpiController
 from pyftdi.usbtools import UsbToolsError
 import time, random
 
-# spellchecker: ignore ftdi pyftdi
+# spellchecker: ignore ftdi pyftdi udev nums
 
 class FPGA_connection():
 	def __init__(self, addr="ftdi://ftdi:2232h/1", spi_frequency=30e6, spi_cs=None):
@@ -41,8 +41,8 @@ class FPGA_connection():
 	
 	def recv_bytes(self, cmd: int, length: int) -> list:
 		padding = 6
-		data = [x for x in range(length+4+padding)]
-		return self.slave.exchange(bytearray([cmd]) + bytearray(data), duplex=True)[5+padding:]
+		data = [x for x in range(length+3+padding)]
+		return self.slave.exchange(bytearray([cmd]) + bytearray(data), duplex=True)[4+padding:]
 
 pretty = lambda l: " ".join(["{:02x}".format(x) for x in l])
 
@@ -92,18 +92,35 @@ def console():
 		return 1
 	
 	print("format: cmd, data")
+	ad = lambda x: fpga.send_bytes(cmd_addr, x)
+	wr = lambda x: fpga.send_bytes(cmd_write, x)
+	rd = lambda: pretty(fpga.recv_bytes(cmd_read, 16))
 
 	while True:
 		try:
 			inp = input("fpga > ")
 		except EOFError:
-			return
+			return ad, wr, rd # get rid of "unused var" warning
 		try:
-			(cmd, dat) = eval('('+inp+')')
-			ret = fpga.duplex_bytes(cmd, dat)
-			print(pretty(ret))
+			cmd = inp.split(' ')[0]
+			rest = ' '.join(inp.split(' ')[1:])
+			ret = eval(f"{cmd}({rest})")
+			if (ret):
+				print(ret)
 		except Exception as e:
 			print("error:" + str(e))
+
+	#while True:
+	#	try:
+	#		inp = input("fpga > ")
+	#	except EOFError:
+	#		return
+	#	try:
+	#		(cmd, dat) = eval('('+inp+')')
+	#		ret = fpga.duplex_bytes(cmd, dat)
+	#		print(pretty(ret))
+	#	except Exception as e:
+	#		print("error:" + str(e))
 
 
 def aes_test():
@@ -122,58 +139,55 @@ def aes_test():
 	print("expected: b9 32 b1 5b a3 7b 86 44 08 30 cc 5f 21 6a 3b f5")
 
 
+cmd_addr  = 1 # set address for read or write
+cmd_write = 2 # data to write at address (inputs)
+cmd_gates = 3 # data to send through gate evaluation
+cmd_read  = 4 # return data at address
+
+gate_and = 0
+gate_xor = 1
+gate_buf = 2
+
 def gate_test():
 	fpga = get_connection()
 	if not fpga:
 		return 1
-	gate_type = 0
-	id_1 = [0x12, 0x34, 0x56]
-	id_2 = [0x78, 0x9a, 0xbc]
-	ctxts = list(bytearray.fromhex("66217c17175db79ea159514bbeef6072"))
-	gate_id = [0,0,1]
 
-	gate_def = [gate_type] + id_1 + id_2 + ctxts + [x+1 for x in ctxts] + [(2*x)%256 for x in ctxts] + gate_id
+	# start by sending some inputs
+	fpga.send_bytes(cmd_addr,  [0,0,0])
+	fpga.send_bytes(cmd_write, [0xf0] * 16)
 
-	fpga.send_bytes(1, gate_def)
+	fpga.send_bytes(cmd_addr,  [1,0,0])
+	fpga.send_bytes(cmd_write, [0x13] * 16)
+
+	# then send gates
+
+	#          type         id 1      id 2      gate id
+	gate_def = [gate_xor] + [0,0,0] + [1,0,0] + [2,0,0]
+	fpga.send_bytes(cmd_gates, gate_def)
+
+	#          type         id        gate id
+	gate_def = [gate_buf] + [1,0,0] + [3,0,0]
+	fpga.send_bytes(cmd_gates, gate_def)
+
+	#          type         id 1      id 2      gate id
+	gate_def = [gate_xor] + [2,0,0] + [3,0,0] + [4,0,0]
+	fpga.send_bytes(cmd_gates, gate_def)
+
+	#          type         id 1      id 2      ctxts   gate id
+#	ctxt  = list(bytearray.fromhex("66217c17175db79ea159514bbeef6072"))
+#	ctxts = ctxt + [x+1 for x in ctxt] + [(x*2)%256 for x in ctxt]
+#	gate_def = [gate_and] + [2,0,0] + [3,0,0] + ctxts + [4,0,0]
+#	fpga.send_bytes(cmd_gates, gate_def)
+
+	# finally, check the result
+	for x in range(5):
+		fpga.send_bytes(cmd_addr, [x,0,0])
+		print(f"{x}:", pretty(fpga.recv_bytes(cmd_read, 16)))
 
 
 def main():
-	fpga = get_connection()
-	if not fpga:
-		return 1
-	
-	cmd_addr = 0
-	cmd_data = 1
-	cmd_read = 2
-
-	# send first address
-	fpga.send_bytes(cmd_addr, [3,2,1])
-
-	# send first data
-	fpga.send_bytes(cmd_data, [2*x for x in range(16)])
-
-
-	# send second address
-	fpga.send_bytes(cmd_addr, [4,2,1])
-
-	# send second data
-	fpga.send_bytes(cmd_data, list(bytearray.fromhex("66217c17175db79ea159514bbeef6072")))
-
-
-	# send first address
-	fpga.send_bytes(cmd_addr, [3,2,1])
-
-	# read first data
-	res = fpga.recv_bytes(cmd_read, 16)
-	print("received:", pretty(res))
-
-
-	# send second address
-	fpga.send_bytes(cmd_addr, [4,2,1])
-
-	# read second data
-	res = fpga.recv_bytes(cmd_read, 16)
-	print("received:", pretty(res))
+	gate_test()
 
 
 if __name__ == '__main__':

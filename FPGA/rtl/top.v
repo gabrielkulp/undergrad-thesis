@@ -1,36 +1,3 @@
-/*
- * top.v
- *
- * vim: ts=4 sw=4
- *
- * Copyright (C) 2019  Sylvain Munaut <tnt@246tNt.com>
- * All rights reserved.
- *
- * BSD 3-clause, see LICENSE.bsd
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the <organization> nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 `default_nettype none
 
 module top (
@@ -48,20 +15,20 @@ module top (
 	input  wire [7:0] PMOD_1B,
 	input  wire clk_12m
 );
-	//assign LEDs = 0;
+	wire clk, clk_2x, rst;
 
-	wire clk;
-	wire clk_2x;
-	wire rst;
+
+	// Get data from SPI onto fabric
 
 	wire [7:0] spi_cmd;
 	wire [7:0] spi_data;
-	wire strobe_first;
-	wire strobe_last;
-	wire strobe_data;
-	reg [7:0] spi_out;
-	wire spi_out_first;
-	wire spi_out_next;
+	wire       spi_first, spi_last, spi_strobe_data;
+	reg  [7:0] spi_out;
+	wire       spi_out_first, spi_out_next;
+
+	wire   spi_strobe_first, spi_strobe_last;
+	assign spi_strobe_first = spi_strobe_data & spi_first;
+	assign spi_strobe_last  = spi_strobe_data & spi_last;
 	spi_fast spi_I (
 		.spi_mosi(slave_mosi),
 		.spi_miso(slave_miso),
@@ -69,9 +36,9 @@ module top (
 		.spi_clk(slave_clk),
 		.addr(spi_cmd),
 		.data(spi_data),
-		.first(strobe_first),
-		.last(strobe_last),
-		.strobe(strobe_data),
+		.first(spi_first),
+		.last(spi_last),
+		.strobe(spi_strobe_data),
 		.out(spi_out),
 		.out_first(spi_out_first),
 		.out_next(spi_out_next),
@@ -79,124 +46,229 @@ module top (
 		.rst(rst)
 	);
 
-	localparam CMD_ADDR = 0;
-	localparam CMD_DATA = 1; // store to ram
-	localparam CMD_READ = 2; // read from ram
 
-	reg [4:0] in_counter;
-	reg [4:0] out_counter;
-	always @ (posedge clk) begin
-		if (strobe_data) begin // receive plaintext
-			if (spi_cmd == CMD_ADDR) begin
-				if (strobe_first) begin
-					in_counter <= 1;
-					recv_addr[0+:8] <= spi_data;
-				end else begin
-					in_counter <= in_counter + 1;
-					recv_addr[in_counter*8 +:8] <= spi_data;
-				end
-			end else if (spi_cmd == CMD_DATA) begin
-				if (strobe_first) begin
-					in_counter <= 1;
-					recv_data[0+:8] <= spi_data;
-				end else begin
-					in_counter <= in_counter + 1;
-					recv_data[in_counter*8 +:8] <= spi_data;
-				end
-			end
-		end
-		if (spi_out_next) begin // send ciphertext
-			out_counter <= out_counter + 1;
-			spi_out     <= send_data[out_counter*8 +:8];
-		end else if (rst || strobe_last) begin
-			out_counter <= -2-6; // 6 bytes of extra padding
-			spi_out     <= send_data[0+:8];
-		end
-	end
+
+	// Handle direct memory access over SPI
+	// for sending inputs and retrieving outputs
+
+	localparam CMD_ADDR  = 1; // set address for reads and writes
+	localparam CMD_WRITE = 2; // data to write at address (inputs)
+	localparam CMD_GATES = 3; // data to send through gate evaluation
+	localparam CMD_READ  = 4; // return data at address
 
 	reg  [ 23:0] recv_addr;
 	reg  [127:0] recv_data;
 	wire [127:0] send_data;
-/*	wire aes_done;
-	reg  aes_start;
-	aes  enc (
-		.clk(clk),
-		.rst(rst),
-		.start(aes_start),
-		.done(aes_done),
-		.state_init(recv_data),
-		.state_final(send_data)
-	);
+	reg  [  4:0] in_counter;
+	reg  [  4:0] out_counter;
 	always @ (posedge clk) begin
-		if (strobe_last && spi_cmd==1)
-			aes_start <= 1;
-		else
-			aes_start <= 0;
+		if (spi_strobe_data) begin // receive plaintext
+			case (spi_cmd)
+				CMD_ADDR: begin
+					if (spi_strobe_first) begin
+						in_counter <= 1;
+						recv_addr[0+:8] <= spi_data;
+					end else begin
+						in_counter <= in_counter + 1;
+						recv_addr[in_counter*8 +:8] <= spi_data;
+					end
+				end
+				CMD_WRITE: begin
+					if (spi_strobe_first) begin
+						in_counter <= 1;
+						recv_data[0+:8] <= spi_data;
+					end else begin
+						in_counter <= in_counter + 1;
+						recv_data[in_counter*8 +:8] <= spi_data;
+					end
+				end
+				// CMD_GATES handled below by spi_decoder
+			endcase
+		end
+		// CMD_READ actually always happens here
+		if (spi_out_next) begin // send reply from send_data register
+			out_counter <= out_counter + 1;
+			spi_out     <= send_data[out_counter*8 +:8];
+		end else if (rst || spi_strobe_last) begin
+			out_counter <= -2-6; // 6 bytes of extra padding
+			spi_out     <= send_data[0+:8];
+		end
 	end
-*/
-	wire wr_en;
-	assign wr_en = (spi_cmd == CMD_DATA);
-	assign LEDs = {4'b0, wr_en};
+	assign send_data = label_out;
 
-	label_array wl (
-		.clk(clk),
-		.rst(rst | strobe_first),
-		.wire_id(recv_addr),
-		.id_strobe(strobe_last),
-		.wr_en(wr_en),
-		.label_in(recv_data),
-		.label_out(send_data),
-		.done()
-	);
 
-	seven_seg ss(
-		.clk(clk),
-		.inp(send_data[PMOD_1B*8 +:8]),
-		.pmod(PMOD_1A)
-	);
-/*
-	wire gate_strobe;
-	wire id_1_strobe;
-	wire id_2_strobe;
-	wire ctxt_strobe;
-	wire gate_id_strobe;
-	wire [1:0] gate_type;
-	wire [23:0] id_1;
-	wire [23:0] id_2;
-	wire [7:0] ctxt_byte;
-	wire [23:0] gate_id;
-	spi_decoder spi_d_I (
+
+	// Deserialize SPI stream when receiving gate definitions
+
+	wire gate_strobe, id_1_strobe, id_2_strobe, ctxt_strobe, gate_id_strobe;
+	wire [  1:0] gate_type;
+	wire [ 23:0] input_id;
+	wire [127:0] ctxt;
+	wire [  1:0] ctxt_idx;
+	wire [ 23:0] gate_id;
+	spi_decoder spi_decoder_i (
 		.input_data(spi_data),
-		.input_command(spi_cmd),
-		.input_strobe(strobe_data),
+		.input_strobe(spi_strobe_data & (spi_cmd == CMD_GATES)),
 
 		.gate_type(gate_type),
-		.id_1(id_1),
-		.id_2(id_2),
-		.ctxt_byte(ctxt_byte),
+		.input_id(input_id),
+		.ctxt(ctxt),
 		.gate_id(gate_id),
+
 		.gate_strobe(gate_strobe),
 		.id_1_strobe(id_1_strobe),
 		.id_2_strobe(id_2_strobe),
 		.ctxt_strobe(ctxt_strobe),
+		.ctxt_idx(ctxt_idx),
 		.gate_id_strobe(gate_id_strobe),
 
 		.clk(clk),
 		.rst(rst)
 	);
 
-	wire [127:0] read_data;
-	ctxt_mem ctxt_m_I (
+
+	// debugging output
+	reg error;
+	assign LEDs = {5{error}};
+	always @ (posedge clk)
+		if (rst | ~BTNs[0])
+			error <= 0;
+
+	seven_seg monitor (
 		.clk(clk),
-		.rst(gate_strobe), // reset before ctxt
-		.write_data(ctxt_byte),
-		.write_strobe(ctxt_strobe),
-
-		.read_addr(BTNs[2:1]+1),
-		.read_data(read_data)
+		.inp(new_label[PMOD_1B*8 +:8]),
+		.pmod(PMOD_1A)
 	);
-*/
 
+
+	// Main logic: pass gate definitions to label array
+	// to fetch, compute new labels, and store results
+	reg [23:0] wire_id_read;
+	reg [23:0] wire_id_write;
+	always @ (posedge clk) begin
+		if (spi_cmd == CMD_GATES) begin
+			wire_id_read  <= input_id;
+			wire_id_write <= gate_id;
+		end else begin
+			wire_id_read  <= recv_addr;
+			wire_id_write <= recv_addr;
+		end
+	end
+
+	wire [127:0] label_out;
+	reg  [127:0] new_label;
+
+	wire l_ctl_done;
+	reg  l_ctl_store;
+
+	localparam AND_GATE = 0;
+	localparam XOR_GATE = 1;
+	localparam BUF_GATE = 2;
+
+	reg [2:0] state;
+	localparam IDLE       = 0;
+	localparam WAIT_L_CTL = 1;
+	//localparam WAIT_AES   = 2;
+	//localparam WAIT_CTXT  = 3;
+	localparam WAIT_ID    = 4;
+	always @ (posedge clk) begin
+		if (rst) begin
+			state <= IDLE;
+			l_ctl_store <= 0;
+			aes_start <= 0;
+		end else begin
+			case (state)
+				IDLE: begin // wait until last input addr received
+					l_ctl_store <= 0;
+					if ((gate_type == BUF_GATE) & id_1_strobe) begin
+						new_label <= label_out;
+						state <= WAIT_L_CTL;
+					end else if (id_2_strobe) begin
+						if (gate_type == AND_GATE) begin
+							aes_start <= 1;
+//							state <= WAIT_AES;
+						end else begin
+							state <= WAIT_L_CTL;
+						end
+					end
+				end
+				WAIT_L_CTL: begin // last input addr received, so wait for fetch
+					if (l_ctl_done) begin
+						new_label <= label_out;
+						state <= WAIT_ID;
+					end
+				end
+/*				WAIT_AES: begin // wait for encryption to finish
+					aes_start <= 0;
+					if (gate_id_strobe)
+						error <= 1;
+					if (aes_done) begin
+						new_label <= aes_out;
+						state <= WAIT_CTXT;
+					end
+				end
+				WAIT_CTXT: begin // wait for the right ctxt to arrive
+					if (gate_id_strobe)
+						error <= 1;
+					if (ctxt_strobe & (ctxt_idx == ctxt_point)) begin
+						new_label <= new_label ^ ctxt;
+						state <= WAIT_ID;
+					end
+				end
+*/				WAIT_ID: begin // wait for storage location
+					if (gate_id_strobe) begin
+						l_ctl_store <= 1;
+						state <= IDLE;
+					end
+				end
+			endcase
+		end
+	end
+
+	wire [1:0] ctxt_point;
+	label_ctl label_ctl_i (
+		.clk(clk),
+		.rst(rst),
+
+		.done(l_ctl_done),
+
+		// fetching
+		// fetch whenever the address changes
+		.wire_id_read(wire_id_read),
+		.id_1_strobe(id_1_strobe | ((spi_cmd == CMD_ADDR) & spi_strobe_last)),
+		.id_2_strobe(id_2_strobe),
+		.gate_type(gate_type),
+		.label_out(label_out),
+		.ctxt_point(ctxt_point),
+
+		// storing
+		.wire_id_write(wire_id_write),
+		.store_strobe(l_ctl_store | ((spi_cmd == CMD_WRITE) & spi_strobe_last)),
+		.label_in((spi_cmd != CMD_WRITE) ? new_label : recv_data)
+	);
+
+
+
+	reg  aes_start;
+	wire aes_done;
+	wire [127:0] aes_out;
+	aes enc (
+		.clk(clk),
+		.rst(rst),
+
+		.state_init(label_out),
+		.start(aes_start),
+
+		.done(aes_done),
+		.state_final(aes_out)
+	);
+
+
+
+// Copyright (C) 2019 Sylvain Munaut <tnt@246tNt.com>
+// All rights reserved
+// Licensed under 3-clause BSD license
+// spellchecker: ignore gbuf sysmgr
 `ifdef NO_PLL
 	reg [7:0] rst_cnt = 8'h00;
 	wire rst_i;
@@ -226,4 +298,4 @@ module top (
 	);
 `endif
 
-endmodule // top
+endmodule

@@ -11,6 +11,8 @@ PROJ_RTL_SRCS := $(addprefix $(PROJ_BASEDIR)/, \
 	sysmgr.v \
 	seven_seg.v \
 	label_array.v \
+	label_ctl.v \
+	spi_decoder.v \
 )
 
 PROJ_TOP_SRC := $(PROJ_BASEDIR)/top.v
