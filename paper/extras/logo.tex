@@ -1,0 +1,17 @@
+\documentclass[border=10pt]{standalone}
+\usepackage[RPvoltages]{circuitikz}
+\ctikzset{logic ports=ieee,logic ports/scale=1}
+
+\begin{document}
+\begin{tikzpicture} [ultra thick]
+	\node[qfpchip, rotate=225, fill=orange, hide numbers,
+		num pins=16, external pad fraction=6] (fpga) at (0,0) {};
+	\node[and port, fill=black] (and) at (0.05, 0) {};
+	\draw
+		(and.in 1) -| ++(0, .46)
+		(and.in 1) -| ++(0,-.025)
+		(and.in 2) -| ++(0,-.46)
+		(and.in 2) -| ++(0, .025)
+		(and.out)  -- ++(.45, 0);
+\end{tikzpicture}
+\end{document}
