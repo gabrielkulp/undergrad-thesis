@@ -59,7 +59,7 @@ module spi_decoder (
 						id_1_strobe <= 1;
 						if (gate_type == BUF_GATE) begin
 							recv_state <= RECV_GATE_ID;
-						end else begin
+						end else begin // else AND or XOR
 							recv_state <= RECV_ID_2;
 						end
 						id_counter <= 0;
@@ -74,7 +74,7 @@ module spi_decoder (
 						id_2_strobe <= 1;
 						if (gate_type == AND_GATE) begin
 							recv_state <= RECV_CTXT;
-						end else begin
+						end else begin // else XOR gate
 							recv_state <= RECV_GATE_ID;
 						end
 						id_counter <= 0;

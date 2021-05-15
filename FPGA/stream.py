@@ -155,35 +155,47 @@ def gate_test():
 
 	# start by sending some inputs
 	fpga.send_bytes(cmd_addr,  [0,0,0])
-	fpga.send_bytes(cmd_write, [0xf0] * 16)
+	fpga.send_bytes(cmd_write, [(8+x**2)%255 for x in range(16)])
 
 	fpga.send_bytes(cmd_addr,  [1,0,0])
-	fpga.send_bytes(cmd_write, [0x13] * 16)
+	fpga.send_bytes(cmd_write, [((x+9)*(8*x-4))%255 for x in range(16)])
+
+	fpga.send_bytes(cmd_addr,  [2,0,0])
+	fpga.send_bytes(cmd_write, [1]+([5]*15))
+
+	fpga.send_bytes(cmd_addr,  [3,0,0])
+	fpga.send_bytes(cmd_write, [1]+([3]*15))
+
+	fpga.send_bytes(5, [0]*16) # should be ignored
+
+#	for x in range(9):
+#		fpga.send_bytes(cmd_addr, [x,0,0])
+#		print(f"{x}:", pretty(fpga.recv_bytes(cmd_read, 16)))
 
 	# then send gates
 
-	#          type         id 1      id 2      gate id
-	gate_def = [gate_xor] + [0,0,0] + [1,0,0] + [2,0,0]
-	fpga.send_bytes(cmd_gates, gate_def)
-
 	#          type         id        gate id
-	gate_def = [gate_buf] + [1,0,0] + [3,0,0]
-	fpga.send_bytes(cmd_gates, gate_def)
-
-	#          type         id 1      id 2      gate id
-	gate_def = [gate_xor] + [2,0,0] + [3,0,0] + [4,0,0]
-	fpga.send_bytes(cmd_gates, gate_def)
-
-	#          type         id 1      id 2      ctxts   gate id
-#	ctxt  = list(bytearray.fromhex("66217c17175db79ea159514bbeef6072"))
-#	ctxts = ctxt + [x+1 for x in ctxt] + [(x*2)%256 for x in ctxt]
-#	gate_def = [gate_and] + [2,0,0] + [3,0,0] + ctxts + [4,0,0]
+#	gate_def = [gate_buf] + [1,0,0] + [3,0,0]
 #	fpga.send_bytes(cmd_gates, gate_def)
 
+	#          type         id 1      id 2      gate id
+#	gate_def = [gate_xor] + [2,0,0] + [3,0,0] + [4,0,0]
+#	fpga.send_bytes(cmd_gates, gate_def)
+
+	ctxt  = list(bytearray.fromhex("66217c17175db79ea159514bbeef6072"))
+	ctxts = ctxt + [x//2 for x in ctxt] + [(x*2)%256 for x in ctxt]
+	fpga.send_bytes(cmd_gates, [gate_and] + [0,0,0] + [1,0,0] + ctxts + [4,0,0])
+	fpga.send_bytes(cmd_gates, [gate_and] + [2,0,0] + [3,0,0] + ctxts + [5,0,0])
+
+	fpga.send_bytes(cmd_gates, [gate_and] + [0,0,0] + [1,0,0] + ctxts + [6,0,0])
+	fpga.send_bytes(cmd_gates, [gate_and] + [2,0,0] + [3,0,0] + ctxts + [7,0,0])
+
+	fpga.send_bytes(cmd_gates, [gate_and] + [2,0,0] + [3,0,0] + ([0]*48) + [8,0,0])
+
 	# finally, check the result
-	for x in range(5):
+	for x in range(9):
 		fpga.send_bytes(cmd_addr, [x,0,0])
-		print(f"{x}:", pretty(fpga.recv_bytes(cmd_read, 16)))
+		print(f"{x}:  ", pretty(fpga.recv_bytes(cmd_read, 16)))
 
 
 def main():
@@ -192,3 +204,11 @@ def main():
 
 if __name__ == '__main__':
 	main()
+
+
+#fpga = get_connection()
+
+#def read_many(n):
+#	for x in range(n):
+#		fpga.send_bytes(cmd_addr, [x,0,0])
+#		print(f"{x}:", pretty(fpga.recv_bytes(cmd_read, 16)))

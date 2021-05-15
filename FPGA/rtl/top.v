@@ -11,11 +11,18 @@ module top (
 	output wire [4:0] LEDs,
 	input  wire [3:0] BTNs,
 
-	output wire [7:0] PMOD_1A,
-	input  wire [7:0] PMOD_1B,
+	//output wire [7:0] PMOD_1A,
+	//input  wire [7:0] PMOD_1B,
 	input  wire clk_12m
 );
 	wire clk, clk_2x, rst;
+
+	// debugging output
+	reg error;
+	assign LEDs = {5{error}};
+	always @ (posedge clk)
+		if (rst | ~BTNs[0])
+			error <= 0;
 
 
 	// Get data from SPI onto fabric
@@ -104,7 +111,7 @@ module top (
 	wire [  1:0] gate_type;
 	wire [ 23:0] input_id;
 	wire [127:0] ctxt;
-	wire [  1:0] ctxt_idx;
+	wire [  1:0] ctxt_recv_idx;
 	wire [ 23:0] gate_id;
 	spi_decoder spi_decoder_i (
 		.input_data(spi_data),
@@ -119,7 +126,7 @@ module top (
 		.id_1_strobe(id_1_strobe),
 		.id_2_strobe(id_2_strobe),
 		.ctxt_strobe(ctxt_strobe),
-		.ctxt_idx(ctxt_idx),
+		.ctxt_idx(ctxt_recv_idx),
 		.gate_id_strobe(gate_id_strobe),
 
 		.clk(clk),
@@ -127,33 +134,13 @@ module top (
 	);
 
 
-	// debugging output
-	reg error;
-	assign LEDs = {5{error}};
-	always @ (posedge clk)
-		if (rst | ~BTNs[0])
-			error <= 0;
-
-	seven_seg monitor (
-		.clk(clk),
-		.inp(new_label[PMOD_1B*8 +:8]),
-		.pmod(PMOD_1A)
-	);
-
 
 	// Main logic: pass gate definitions to label array
 	// to fetch, compute new labels, and store results
-	reg [23:0] wire_id_read;
-	reg [23:0] wire_id_write;
-	always @ (posedge clk) begin
-		if (spi_cmd == CMD_GATES) begin
-			wire_id_read  <= input_id;
-			wire_id_write <= gate_id;
-		end else begin
-			wire_id_read  <= recv_addr;
-			wire_id_write <= recv_addr;
-		end
-	end
+	wire [23:0] wire_id_read;
+	wire [23:0] wire_id_write;
+	assign wire_id_read  = (spi_cmd == CMD_GATES) ? input_id : recv_addr;
+	assign wire_id_write = (spi_cmd == CMD_GATES) ? gate_id  : recv_addr;
 
 	wire [127:0] label_out;
 	reg  [127:0] new_label;
@@ -168,8 +155,8 @@ module top (
 	reg [2:0] state;
 	localparam IDLE       = 0;
 	localparam WAIT_L_CTL = 1;
-	//localparam WAIT_AES   = 2;
-	//localparam WAIT_CTXT  = 3;
+	localparam WAIT_AES   = 2;
+	localparam WAIT_CTXT  = 3;
 	localparam WAIT_ID    = 4;
 	always @ (posedge clk) begin
 		if (rst) begin
@@ -180,43 +167,54 @@ module top (
 			case (state)
 				IDLE: begin // wait until last input addr received
 					l_ctl_store <= 0;
+					if (gate_id_strobe)
+						error <= 1;
 					if ((gate_type == BUF_GATE) & id_1_strobe) begin
-						new_label <= label_out;
 						state <= WAIT_L_CTL;
 					end else if (id_2_strobe) begin
-						if (gate_type == AND_GATE) begin
-							aes_start <= 1;
-//							state <= WAIT_AES;
-						end else begin
-							state <= WAIT_L_CTL;
-						end
+						state <= WAIT_L_CTL;
 					end
 				end
 				WAIT_L_CTL: begin // last input addr received, so wait for fetch
+					if (gate_id_strobe | ctxt_strobe)
+						error <= 1;
 					if (l_ctl_done) begin
 						new_label <= label_out;
-						state <= WAIT_ID;
+						if (gate_type == AND_GATE) begin
+							aes_start <= 1;
+							state <= WAIT_AES;
+						end else begin
+							state <= WAIT_ID;
+						end
 					end
 				end
-/*				WAIT_AES: begin // wait for encryption to finish
+				WAIT_AES: begin // wait for encryption to finish
 					aes_start <= 0;
-					if (gate_id_strobe)
+					if (gate_id_strobe | ctxt_strobe)
 						error <= 1;
 					if (aes_done) begin
-						new_label <= aes_out;
-						state <= WAIT_CTXT;
+						if (ctxt_point == 0) begin // ctxt_point of 0 means ctxt is 0
+//							new_label <= aes_out;
+							state <= WAIT_ID;
+						end else begin // otherwise wait for ctxt over serial
+							state <= WAIT_CTXT;
+						end
 					end
 				end
 				WAIT_CTXT: begin // wait for the right ctxt to arrive
 					if (gate_id_strobe)
 						error <= 1;
-					if (ctxt_strobe & (ctxt_idx == ctxt_point)) begin
-						new_label <= new_label ^ ctxt;
+					if (ctxt_strobe & (ctxt_recv_idx == ctxt_point)) begin
+						new_label <= aes_out ^ ctxt;
 						state <= WAIT_ID;
 					end
 				end
-*/				WAIT_ID: begin // wait for storage location
+				WAIT_ID: begin // wait for storage location
+					if (gate_strobe)
+						error <= 1;
 					if (gate_id_strobe) begin
+						if (ctxt_point == 0)
+							new_label <= aes_out;
 						l_ctl_store <= 1;
 						state <= IDLE;
 					end
