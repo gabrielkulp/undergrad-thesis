@@ -1,17 +1,33 @@
-\documentclass[border=10pt]{standalone}
+\documentclass[margin=5pt]{standalone}
 \usepackage[RPvoltages]{circuitikz}
-\ctikzset{logic ports=ieee,logic ports/scale=1}
+\ctikzset{logic ports=ieee}
+
+% Colors for poster (logo-white.pdf)
+%\definecolor{chip-color}{rgb}{0,0,0}
+%\definecolor{line-color}{rgb}{1,1,1}
+%\definecolor{gate-color}{rgb}{1,1,1}
+
+% Colors for webpage (logo.png)
+% To get 256x256 png:
+%   convert -density 160.5 logo.pdf logo.png
+% To get 150x150, use density 94
+\definecolor{chip-color}{HTML}{D73F09}
+\definecolor{line-color}{rgb}{0,0,0}
+\definecolor{gate-color}{rgb}{1,1,1}
 
 \begin{document}
-\begin{tikzpicture} [ultra thick]
-	\node[qfpchip, rotate=225, fill=orange, hide numbers,
-		num pins=16, external pad fraction=6] (fpga) at (0,0) {};
-	\node[and port, fill=black] (and) at (0.05, 0) {};
-	\draw
-		(and.in 1) -| ++(0, .46)
-		(and.in 1) -| ++(0,-.025)
-		(and.in 2) -| ++(0,-.46)
-		(and.in 2) -| ++(0, .025)
-		(and.out)  -- ++(.45, 0);
+\begin{tikzpicture} [line width=2pt]
+	\ctikzset{multipoles/external pins thickness=3}
+	\node[qfpchip, rotate=45, hide numbers, fill=chip-color, thin, no topmark,
+		num pins=16, external pins width=0.0] (fpga) at (0,0) {};
+	\node[and port, fill=gate-color, thin] (and) at (0.05, 0) {};
+	\node[and port, color=line-color] (and) at (0.05, 0) {};
+	\draw [color=line-color, line width=4pt]
+		(and.bin 1) -- ++ (-.85,0)
+		(and.bin 2) -- ++ (-.4,0) -- ++ (0,-.45)
+		(and.bout)  -- ++ (.5, 0) -- ++ (0,.55)
+		(and.out)   -- ++ (.6,0);
+	\node[qfpchip, rotate=45, hide numbers, color=line-color, no topmark,
+		num pins=16, external pad fraction=10] (fpga) at (0,0) {};
 \end{tikzpicture}
 \end{document}
