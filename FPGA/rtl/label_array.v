@@ -31,7 +31,7 @@ module label_array (
 					done <= 0;
 					if (id_strobe) begin
 						ram_wr_en   <= wr_en;
-						ram_addr    <= {wire_id[12:0], 1'b0}; // fetch lower 64 bits
+						ram_addr    <= {wire_id, 1'b0}; // fetch lower 64 bits
 						ram_data_in <= label_in[0+:64];
 						state       <= BUBBLE;
 					end
@@ -58,6 +58,7 @@ module label_array (
 	end
 
 	// Fetch and store 64 bits at a time by parallelizing SPRAM modules.
+	// spellchecker: ignore SPRAM DATAIN MASKWREN CHIPSELECT POWEROFF DATAOUT
 
 	SB_SPRAM256KA ram_0 (
 		.ADDRESS(ram_addr),

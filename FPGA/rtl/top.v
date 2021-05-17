@@ -63,7 +63,7 @@ module top (
 	localparam CMD_GATES = 3; // data to send through gate evaluation
 	localparam CMD_READ  = 4; // return data at address
 
-	reg  [ 23:0] recv_addr;
+	reg  [ 12:0] recv_addr;
 	reg  [127:0] recv_data;
 	wire [127:0] send_data;
 	reg  [  4:0] in_counter;
@@ -109,10 +109,10 @@ module top (
 
 	wire gate_strobe, id_1_strobe, id_2_strobe, ctxt_strobe, gate_id_strobe;
 	wire [  1:0] gate_type;
-	wire [ 23:0] input_id;
+	wire [ 12:0] input_id;
 	wire [127:0] ctxt;
 	wire [  1:0] ctxt_recv_idx;
-	wire [ 23:0] gate_id;
+	wire [ 12:0] gate_id;
 	spi_decoder spi_decoder_i (
 		.input_data(spi_data),
 		.input_strobe(spi_strobe_data & (spi_cmd == CMD_GATES)),
@@ -137,8 +137,8 @@ module top (
 
 	// Main logic: pass gate definitions to label array
 	// to fetch, compute new labels, and store results
-	wire [23:0] wire_id_read;
-	wire [23:0] wire_id_write;
+	wire [12:0] wire_id_read;
+	wire [12:0] wire_id_write;
 	assign wire_id_read  = (spi_cmd == CMD_GATES) ? input_id : recv_addr;
 	assign wire_id_write = (spi_cmd == CMD_GATES) ? gate_id  : recv_addr;
 

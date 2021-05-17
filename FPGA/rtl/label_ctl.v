@@ -7,7 +7,7 @@ module label_ctl (
 	output reg done,
 
 	// fetching
-	input wire [23:0] wire_id_read,
+	input wire [12:0] wire_id_read,
 	input wire id_1_strobe,
 	input wire id_2_strobe,
 	input wire [  1:0] gate_type,
@@ -15,7 +15,7 @@ module label_ctl (
 	output reg [  1:0] ctxt_point, // point and permute pointer
 
 	// storing
-	input wire [23:0] wire_id_write,
+	input wire [12:0] wire_id_write,
 	input wire store_strobe,
 	input wire [127:0] label_in
 );
@@ -23,7 +23,7 @@ module label_ctl (
 	wire [127:0] array_out;
 	reg  array_strobe;
 
-	wire [127:0] wire_id;
+	wire [12:0] wire_id;
 	assign wire_id = wr_en ? wire_id_write : wire_id_read;
 
 	always @ (posedge clk)
@@ -33,7 +33,7 @@ module label_ctl (
 	label_array label_array_i (
 		.clk(clk),
 		.rst(rst),
-		.wire_id(wire_id[12:0]),
+		.wire_id(wire_id),
 		.id_strobe(array_strobe),
 		.wr_en(wr_en),
 		.label_in(label_in),

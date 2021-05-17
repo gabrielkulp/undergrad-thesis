@@ -8,9 +8,9 @@ module spi_decoder (
 
 	// Deserialized outputs
 	output reg [  1:0] gate_type,
-	output reg [ 23:0] input_id,
+	output reg [ 12:0] input_id,
 	output reg [127:0] ctxt,
-	output reg [ 23:0] gate_id,
+	output reg [ 12:0] gate_id,
 
 	// Context for control unit
 	output reg gate_strobe, // gate type is ready
@@ -54,8 +54,11 @@ module spi_decoder (
 					recv_state <= RECV_ID_1;
 				end
 				RECV_ID_1: begin
-					input_id[id_counter*8 +: 8] <= input_data;
-					if (id_counter == 2) begin
+					if (id_counter == 0) begin
+						id_counter <= 1;
+						input_id[7:0] <= input_data;
+					end else begin
+						input_id[12:8] <= input_data[4:0];
 						id_1_strobe <= 1;
 						if (gate_type == BUF_GATE) begin
 							recv_state <= RECV_GATE_ID;
@@ -63,14 +66,15 @@ module spi_decoder (
 							recv_state <= RECV_ID_2;
 						end
 						id_counter <= 0;
-					end else begin
-						id_counter <= id_counter + 1;
 					end
 				end
 				RECV_ID_2: begin // XOR and AND gates
-					input_id[id_counter*8 +: 8] <= input_data;
 					ctxt_counter <= 0;
-					if (id_counter == 2) begin
+					if (id_counter == 0) begin
+						id_counter <= 1;
+						input_id[7:0] <= input_data;
+					end else begin
+						input_id[12:8] <= input_data[4:0];
 						id_2_strobe <= 1;
 						if (gate_type == AND_GATE) begin
 							recv_state <= RECV_CTXT;
@@ -78,8 +82,6 @@ module spi_decoder (
 							recv_state <= RECV_GATE_ID;
 						end
 						id_counter <= 0;
-					end else begin
-						id_counter <= id_counter + 1;
 					end
 				end
 				RECV_CTXT: begin // ctxt_counter = {ctxt_idx, byte index}
@@ -94,10 +96,11 @@ module spi_decoder (
 					end
 				end
 				RECV_GATE_ID: begin
-					gate_id[id_counter*8 +: 8] <= input_data;
-					id_counter <= id_counter + 1;
-
-					if (id_counter == 2) begin
+					id_counter <= 1;
+					if (id_counter == 0) begin
+						gate_id[7:0] <= input_data;
+					end else begin
+						gate_id[12:8] <= input_data[4:0];
 						gate_id_strobe <= 1;
 						recv_state <= RECV_GATE_TYPE;
 					end
