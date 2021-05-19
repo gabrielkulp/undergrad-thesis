@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import socket, argparse
 import circuit, ot
+from fpga import get_fpga
 
 # evaluator (client)
 # test.py executes this script and reads its exit code
@@ -17,9 +18,22 @@ parser.add_argument("-p", "--port", dest="port",
 parser.add_argument("-a", "--addr", dest="address",
 					type=str, default="127.0.0.1",
 					help="garbler's IP or hostname (default: 127.0.0.1)")
+parser.add_argument("-n", "--no-fpga", dest="no_fpga", action='store_true',
+					help="do not use the connected FPGA")
 args = parser.parse_args()
 
 print("  --  Bob  --\n")
+
+fpga = None
+if args.no_fpga:
+	print("Ignoring FPGA")
+else:
+	fpga = get_fpga()
+
+if fpga and not fpga.emu:
+	print("Running with acceleration\n")
+else:
+	print("Running without acceleration\n")
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 	s.connect((args.address, args.port))
@@ -28,12 +42,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 	c = circuit.read_from_file(args.CIRCUIT)
 
 	print("Receiving Alice's input")
-	inputs = circuit.get_garbler_input(s, c)
+	inputs_a = circuit.get_garbler_input(s, c, fpga)
 
 	print("OT-ing my input...")
-	inputs += circuit.get_evaluator_input(s, c, args.INPUT)
+	inputs_b = circuit.get_evaluator_input(s, c, args.INPUT, fpga)
 
 	print("Evaluating circuit...")
-	result = circuit.evaluate(s, c, inputs)
+	inputs = []
+	if inputs_a:
+		inputs = inputs_a + inputs_b
+	result = circuit.evaluate(s, c, inputs, fpga)
 
 	print(f"Result:\n{result}")

@@ -10,7 +10,7 @@ def send_garbler_input(sock: socket, gc: GarbledCircuit, inp: int):
 	input_wires = int_to_wires(inp, gc.circuit.input_sizes[0])
 	for wire_value, label_pair in zip(input_wires, gc.input_labels):
 		active_label = label_pair[wire_value]
-		sock.sendall(active_label.to_bytes(16, "big"))
+		sock.sendall(active_label.to_bytes(16, "little"))
 
 
 def send_evaluator_input(sock: socket, gc: GarbledCircuit):
@@ -20,7 +20,8 @@ def send_evaluator_input(sock: socket, gc: GarbledCircuit):
 
 def garble(circuit: Circuit):
 	# generate random labels
-	_generate_wire_label = lambda: int.from_bytes(os.urandom(16), "little")
+	#_generate_wire_label = lambda: int.from_bytes(os.urandom(16), "little")
+	_generate_wire_label = lambda: 0
 
 	# The secret difference between True and False labels.
 	# Ensure color bit is set so T and F have opposite colors
@@ -44,8 +45,14 @@ def garble(circuit: Circuit):
 
 def send_garbled_gates(sock: socket, gc: GarbledCircuit):
 	ctxts = gc.ctxts()
+	c = 0
 	for ctxt in ctxts:
-		sock.sendall(ctxt.to_bytes(16, "big"))
+		try:
+			sock.sendall(ctxt.to_bytes(16, "little"))
+			c += 1
+		except:
+			print("Error: socket closed but only", c/3, "AND gates sent")
+			return
 
 
 def _garble_gates(circuit, input_labels, inv_wire):
@@ -114,7 +121,7 @@ def _garble_gates(circuit, input_labels, inv_wire):
 			labels[gate.id] = inv_wire(in_f)
 			# no ciphertext to append
 
-		elif gate.type == GateType.EQW:
+		elif gate.type == GateType.BUF:
 			# buffer. Do nothing
 			labels[gate.id] = labels[gate.inputs[0]]
 

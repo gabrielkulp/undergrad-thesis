@@ -47,7 +47,7 @@ def _read_gates(filename):
 					raise ValueError("INV gates have 1 input")
 			
 			elif line[-1] == "EQW":
-				gate_type = GateType.EQW
+				gate_type = GateType.BUF
 				if wires_in != 1:
 					raise ValueError("EQW gates have 1 input")
 

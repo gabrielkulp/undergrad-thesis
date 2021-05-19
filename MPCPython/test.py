@@ -169,5 +169,8 @@ def test_all():
 		# run test, print result
 		print("passed" if test.function(test.verbose) else "failed")
 
+def prettyhex(ba: bytearray):
+	return " ".join(["{:02x}".format(b) for b in ba])
+
 if __name__ == "__main__":
 	test_all()

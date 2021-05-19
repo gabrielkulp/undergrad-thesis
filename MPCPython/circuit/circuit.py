@@ -11,12 +11,12 @@ Gate = namedtuple("Gate", ["type", "inputs", "id"])
 def enum(**named_values):
 	return type("Enum", (), named_values)
 
-GateType = enum(XOR=0, AND=1, INV=2, EQW=3)
+GateType = enum(AND=0, XOR=1, BUF=2, INV=3)
 
 # Utilities
 _aes_keys  = aes.get_key_schedule(bytearray.fromhex("000102030405060708090a0b0c0d0e0f"))
-_to_bytes = lambda x: bytearray(x.to_bytes(16, "little"))
-hash_pair = lambda x, y: int.from_bytes(aes.encrypt(_aes_keys, _to_bytes((x*2)^(y*2))), "little")
+_to_bytes = lambda x: bytearray(x.to_bytes(17, "little")[:-1])
+hash_pair = lambda x, y: int.from_bytes(aes.encrypt(_aes_keys, _to_bytes((x^y)*2)), "little")
 
 c_idx     = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
 
@@ -41,7 +41,7 @@ def plain_evaluate(circuit: Circuit, inputs: list[int]):
 		elif gate.type == GateType.INV:
 			labels[gate.id] = 1-labels[gate.inputs[0]]
 
-		elif gate.type == GateType.EQW:
+		elif gate.type == GateType.BUF:
 			labels[gate.id] = labels[gate.inputs[0]]
 
 		else:

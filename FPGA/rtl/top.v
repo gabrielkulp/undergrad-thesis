@@ -213,7 +213,7 @@ module top (
 					if (gate_strobe)
 						error <= 1;
 					if (gate_id_strobe) begin
-						if (ctxt_point == 0)
+						if ((gate_type == AND_GATE) & (ctxt_point == 0))
 							new_label <= aes_out;
 						l_ctl_store <= 1;
 						state <= IDLE;

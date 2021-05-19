@@ -23,8 +23,8 @@ module label_ctl (
 	wire [127:0] array_out;
 	reg  array_strobe;
 
-	wire [12:0] wire_id;
-	assign wire_id = wr_en ? wire_id_write : wire_id_read;
+	reg [12:0] wire_id;
+	//assign wire_id = wr_en ? wire_id_write : wire_id_read;
 
 	always @ (posedge clk)
 		array_strobe <= (id_1_strobe | id_2_strobe | store_strobe);
@@ -64,12 +64,15 @@ module label_ctl (
 					if (id_1_strobe) begin
 						state <= FETCH_1;
 						wr_en <= 0;
+						wire_id <= wire_id_read;
 					end else if (id_2_strobe) begin
 						state <= FETCH_2;
 						wr_en <= 0;
+						wire_id <= wire_id_read;
 					end else if (store_strobe) begin
 						state <= STORE;
 						wr_en <= 1;
+						wire_id <= wire_id_write;
 					end
 				end
 				FETCH_1: begin
@@ -90,10 +93,11 @@ module label_ctl (
 						ctxt_point <= {label_out[0], array_out[0]};
 						done <= 1;
 
-						if (gate_type == AND_GATE)
+						if (gate_type == AND_GATE) begin
 							label_out <= {array_out[126:0] ^ label_out[126:0], 1'b0};
-						else 
+						end else begin
 							label_out <= label_out ^ array_out;
+						end
 					end
 				end
 				STORE: begin
