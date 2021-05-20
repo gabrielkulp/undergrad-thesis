@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import socket, argparse
 import circuit, ot
+from datetime import datetime
 
 # garbler (server)
 # test.py executes this script and reads its exit code
@@ -32,6 +33,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
 			break
 
 		print(f"\nConnected to {addr[0]}:{addr[1]}")
+		print(datetime.now())
 
 		with conn as s:
 			print("Reading circuit file")

@@ -35,22 +35,23 @@ if fpga and not fpga.emu:
 else:
 	print("Running without acceleration\n")
 
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-	s.connect((args.address, args.port))
+while True:
+	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+		s.connect((args.address, args.port))
 
-	print("Reading circuit file")
-	c = circuit.read_from_file(args.CIRCUIT)
+		print("Reading circuit file")
+		c = circuit.read_from_file(args.CIRCUIT)
 
-	print("Receiving Alice's input")
-	inputs_a = circuit.get_garbler_input(s, c, fpga)
+		print("Receiving Alice's input")
+		inputs_a = circuit.get_garbler_input(s, c, fpga)
 
-	print("OT-ing my input...")
-	inputs_b = circuit.get_evaluator_input(s, c, args.INPUT, fpga)
+		print("OT-ing my input...")
+		inputs_b = circuit.get_evaluator_input(s, c, args.INPUT, fpga)
 
-	print("Evaluating circuit...")
-	inputs = []
-	if inputs_a:
-		inputs = inputs_a + inputs_b
-	result = circuit.evaluate(s, c, inputs, fpga)
+		print("Evaluating circuit...")
+		inputs = []
+		if inputs_a:
+			inputs = inputs_a + inputs_b
+		result = circuit.evaluate(s, c, inputs, fpga)
 
-	print(f"Result:\n{result}")
+		print(f"Result:\n{result}")
