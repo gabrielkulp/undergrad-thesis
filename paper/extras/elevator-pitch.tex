@@ -1,0 +1,22 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[headheight=28pt,margin=3cm]{geometry}
+\setcounter{secnumdepth}{0} % disable section numbers
+\pagenumbering{gobble}      % disable page numbers
+
+\usepackage{fancyhdr} \pagestyle{fancy} \fancyhf{}
+\rhead{Gabriel Kulp \\ Dr. Mike Rosulek}
+\lhead{Mobile Cryptographic Coprocessor for \\Privacy-Preserving Two-Party Computation}
+
+\begin{document}
+\section{5th Grade Audience}
+Have you ever wanted to see who got the higher grade on something, but you didn't want to say what your grade was? It turns out that there's a solution! It's just really slow and uses a lot of complicated math. It's been used by governments and big companies to look for correlations in data they can't legally share, like school and doctor records. The problem is that it's so slow that only supercomputers really do it, and most people don't have a supercomputer. Most people do have a smartphone though, so my project is to design a phone addon that helps it do all the complicated math without running out of battery so quickly. Right now it's this separate piece I have plugged in, but some day it might be a normal part of many devices! Inside it's pretty different than a normal computer, since the only thing it can do is speed up answering these particular kinds of questions.
+
+\vfill
+\section{General Audience}
+You know how you need to share your contacts with an app for it to tell you which of your friends have accounts? It doesn't need to be that way. There's a whole branch of math, specifically a kind of cryptography, that deals with computing on private inputs. For example, private set intersection is when you figure out what's in common between two sets, like your contacts list and the list of users, without either party needing to give up their list. Doing a general computation on private data is really slow, though, compared to just trusting someone not to leak information. It's mostly been done in the real world between big data centers looking for correlations in health and student data that can't legally be shared. My project is to help low-end devices like smartphones to perform this kind of computation by designing a hardware addon that's more efficient than the phone's processor.
+
+\vfill
+\section{Highly-Technical Audience}
+I implemented Yao's Garbled Circuits in software, and then I designed an FPGA co-processor that my software can offload to. My hope is that we can bring the privacy benefits of two-party computation to the cloud computing model via acceleration. My co-processor is general-purpose, but only in the sense that it can accelerate the evaluation of any garbled circuit. Rather than a typical Von Neumann architecture, this design fetches its instructions and data over the same serial interface, which is basically just the communication stream from the garbler to the evaluator, but with the circuit definition mixed in to annotate the ciphertexts. I'm using block RAM as fast read-only lookup tables for AES, and I'm using a larger 32MB DRAM peripheral to hold the active wire labels. The FPGA evaluates the circuit on-the-fly, so when the phone finishes streaming, the FPGA reports the result immediately.
+
+\end{document}
