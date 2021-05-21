@@ -2,7 +2,7 @@
 In this section I'll describe all of my design choices when planning and implementing this project.
 
 \subsection{Algorithm}
-I first implemented Yao's Garbled Circuits with permute-and-point. Next, I added the Row Reduction and Free XOR improvements. I decided not to pursue Half Gates due to time constraints.
+I first implemented Yao's Garbled Circuits with permute-and-point. Next, I added the Row Reduction and Free XOR improvements. I decided not to pursue Half Gates or Garbled Gadgets due to time constraints.
 
 I chose to keep the project general-purpose, such that it could execute for any circuit definition within the hardware limits (the FPGA can hold eight thousand wire labels, with expansion options up to four million; more on this in Sec.~\ref{sec:hw}).
 

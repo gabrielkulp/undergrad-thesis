@@ -13,6 +13,9 @@
 
 \usepackage[width=.8\textwidth, labelfont=bf]{caption}
 \usepackage[RPvoltages]{circuitikz}
+\usetikzlibrary{decorations.pathmorphing}
+\usetikzlibrary{calc, positioning}
+\usetikzlibrary{shapes.arrows}
 \ctikzset{logic ports=ieee,logic ports/scale=1}
 
 \makeatletter
@@ -34,3 +37,32 @@
 		{\@latex@warning{Unresolved comment outside draft}}%
 }
 \makeatother
+
+
+\newcommand{\littlekey}[2] {
+	\draw (#1)++(-.4,0) coordinate (center);
+	\draw (center) node[] {\tiny{#2}};
+	\draw (center)++ (20:.3) coordinate (top) arc(20:340:.3) coordinate (bottom);
+	\draw (center)++ (-.2,0) circle (.05);
+	%\draw (center)++ (.5,.1) -- ++ (.75,0);
+	\draw (top) -- ++(.7,0)
+	coordinate (tmp) -- ($(#1 -| tmp) + (.15,0)$)
+	coordinate (tip);
+	\draw [decorate, decoration={
+		zigzag,
+		segment length=5,
+		amplitude=1,
+		pre length = 2.5, % centers zigzag
+		post length = 0
+	}] (bottom) -- ++(.7,0) coordinate (tmp);
+	\draw (tmp) -- (tip);
+}
+
+\newcommand{\lockshape}[2]{
+	\draw (#1) ++ (-.7,.7) node [below right] {\footnotesize{#2}};
+	\draw[thick] (#1) ++ (-60:.1) coordinate (right)
+	arc (-60:240:.1)
+	-- ++ (0,-.2) -| (right);
+	\node[rectangle, draw, thick, minimum size=30] at (#1) (lastBox) {};
+	%\draw (#1) ++ (-.7,.7) rectangle ++(1.4,-1.4);
+}
