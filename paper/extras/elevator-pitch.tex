@@ -5,7 +5,7 @@
 
 \usepackage{fancyhdr} \pagestyle{fancy} \fancyhf{}
 \rhead{Gabriel Kulp \\ Dr. Mike Rosulek}
-\lhead{Mobile Cryptographic Coprocessor for \\Privacy-Preserving Two-Party Computation}
+\lhead{Mobile Cryptographic Coprocessor for Privacy-Preserving Two-Party Computation}
 
 \begin{document}
 \section{5th Grade Audience}
@@ -18,5 +18,21 @@ You know how you need to share your contacts with an app for it to tell you whic
 \vfill
 \section{Highly-Technical Audience}
 I implemented Yao's Garbled Circuits in software, and then I designed an FPGA co-processor that my software can offload to. My hope is that we can bring the privacy benefits of two-party computation to the cloud computing model via acceleration. My co-processor is general-purpose, but only in the sense that it can accelerate the evaluation of any garbled circuit. Rather than a typical Von Neumann architecture, this design fetches its instructions and data over the same serial interface, which is basically just the communication stream from the garbler to the evaluator, but with the circuit definition mixed in to annotate the ciphertexts. I'm using block RAM as fast read-only lookup tables for AES, and I'm using a larger 32MB DRAM peripheral to hold the active wire labels. The FPGA evaluates the circuit on-the-fly, so when the phone finishes streaming, the FPGA reports the result immediately.
+
+\pagebreak\pagestyle{plain}
+
+\newgeometry{top=2cm,bottom=2cm, left=2cm, right=2cm}
+\section{Poster Audio Transcript}
+Most apps require you to share your contacts, which can feel like an invasion of privacy. It doesn't need to be that way. There's a whole branch of math, specifically a kind of cryptography, that deals with computing and privacy. For example, private set intersection is when you figure out what's in common between two sets, like your contacts list and the list of users, without either party needing to give up their list. Doing a general computation on private data is really slow, though, compared to just trusting someone not to leak information. It's mostly been done in the real world between big data centers looking for correlations in health and student data that can't legally be shared. My project is to help low-end devices like smartphones to perform this kind of computation by designing a hardware addon that's orders of magnitude more efficient than the phone's processor. I achieved a calculated $260\times$ speed improvement assuming a saturated serial connection, and no significant difference in battery life.
+
+Multi-party computation (MPC) solves problems that are otherwise impossible without trust. The classic example is that two millionaires at a party want to find out who has more money, but they don't want to divulge how much money they have. They could whisper in the butler's ear, but he might tell someone later or give the wrong answer, so they'd rather not trust anybody. MPC allows them to answer their question without trusting each other or the butler.
+
+In the modern cloud-computing model, providers compute on client data using proprietary algorithms. When clients send data to be processed, it is also available to the service provider for logging and analysis. This violation of privacy serves as a building block of the world of commercial IoT, cloud services, and centralized machine learning. MPC provides a cryptographic solution to this problem, removing the need to share data or trust a third party, while still computing the same results.
+
+Support for efficient MPC in mobile devices could open the doors to many other privacy- and security-focused improvements to how our computers communicate. For example, a user could evaluate a pre-trained machine learning model without revealing their data to the service provider and without the service provider revealing their model. This would, for example, allow a user to take a photograph and have it classified by a private algorithm without providing the image in the clear to the owner of the algorithm.
+
+One obstacle to widespread adoption of MPC is the poor efficiency of execution. The protocol's cryptographic overhead slows the computation by several orders of magnitude. To address this, I propose a coprocessor to accelerate the client's workload. This coprocessor is attached to a smartphone to handle the most power-hungry aspects of the calculation more efficiently than the phone's built-in processor. In theory, this technique could be used to make MPC a common task in the same way that other cryptographic operations (like HTTPS in the web browser) are widespread and efficient.
+
+Cryptography is already widespread and allows for many improvements and efficiencies in our daily lives. Online banking, secure video calling, and private messaging all rely on cryptography to prevent others from snooping or interfering. Multi-party computation (MPC) is a kind of cryptography that allows a whole new class of problems to be solved, but it takes a lot of computing power. MPC could be adopted more readily if there was an easy way to offload that work onto specially-designed hardware. My project integrates custom hardware with a smartphone, and I conclude that this is a feasible architecture for performing efficient MPC.
 
 \end{document}
