@@ -1,14 +1,40 @@
 \section{Approach}
+In this section I'll describe all of my design choices when planning and implementing this project.
 
 \subsection{Algorithm}
+I first implemented Yao's Garbled Circuits with permute-and-point. Next, I added the Row Reduction and Free XOR improvements. I decided not to pursue Half Gates due to time constraints.
+
+I chose to keep the project general-purpose, such that it could execute for any circuit definition within the hardware limits (the FPGA can hold eight thousand wire labels, with expansion options up to four million; more on this in Sec.~\ref{sec:hw}).
+
+My implementation uses a streaming approach, wherein the first line of the circuit definition file is interpreted, computed, and transmitted before the next line is even read. This is in contrast to an in-memory approach which would read the entire file, perform all computations, then transmit all messages. This means that the size of the circuit is not a concern for the garbler, and the evaluator can simply pass off the network traffic to the FPGA as it comes in. Considering that (useful) circuits can easily be larger than a typical consumer-oriented computer's memory, streaming is essential to feasibility.
 
 \subsection{Protocol}
+I embraced the ``semi-honest'' model, in which the two parties behave correctly, but are ``curious'' about the information which should be hidden from them. This means that I can define garbler-evaluator protocol without added security in mind. This means that I designed a protocol that makes many assumptions about the other party, like that they run the same version of the software.
+
+I chose to assume that both parties already have the same circuit definition files. This is fine for development and testing, but any real application would require sending the file or at least its hash before starting the transaction. Once both parties have the same definition file, the transmission of data structures is the same every time, so there is no need for packet framing beyond what's inherent in TCP. The parties communicate over a socket that could be local, LAN, or across the internet, and I leave packetizing, buffering, and various transmission guarantees to TCP/IP.
+
+I send the minimum amount of information for each gate. Since the type and ID are already provided in-order from the circuit definition, I send and receive \textit{only} the AND gate ciphertexts, without padding or metadata.
+
+Communication with the FPGA is more complicated since it doesn't have access to the circuit definition file. The circuit definition can be considered a set of instructions for the co-processor to execute, and sending these ahead of execution time would add significant design overhead for the storage and access of these instructions. Instead, instructions (gate type), operands (gate ID and wire labels), and data (AND gate ciphertexts) are all transmitted over the same serial connection, in that order. Once the smartphone finishes transmitting the data to the FPGA, the FPGA replies with the circuit outputs, again without padding or metadata, since the smartphone already knows exactly the format and amount of data it will receive.
+
+\comment{Talk about the oblivious transfer }
 
 \subsection{Software}
+I wrote the garbler and evaluator code in Python. An interpreted language is obviously not ideal for a performance-oriented project, but the ease of rapid prototyping provided enormous benefit to the development process. With more time or in a following project, I would re-implement the functionality in Rust or C. I made some design decisions with a language migration in mind, like avoiding esoteric features and libraries beyond the standard library.
 
-\subsection{Hardware}
+I also made some software design decisions to make the hardware definition steps easier. For example, I learned and re-implemented AES rather than relying on OpenSSL or some other cryptography library. This also made the project more of an academic exercise than a typical software engineering process.
+
+\comment{What else goes here? I already mentioned sockets. Maybe the optional FPGA connection?}
+
+\subsection{Hardware}\label{sec:hw}
 I chose the Pine64 PinePhone for the mobile platform since it fully supports Linux, allowing me to use the same source code for the mobile and server sides of the protocol. The PinePhone also includes a USB port accessible to userspace tools just like a laptop. I chose the iCEBreaker FPGA development board (Lattice iCE40) for its low cost, open-source board design, open-source toolchain, and accessible community.
 
 Most current research focuses on communication between data centers or between a client and the cloud. My project focuses on lower-power devices for which hardware acceleration is the only viable option to maintain reasonable power efficiency. Power draw (measured by battery life) is therefore the point of comparison for the software-only and FPGA implementations.
 
 I have selected the Lattice ICE40 FPGA; a promising low-cost low-power chip that has an open-source toolchain available. I would rather not rely on closed-source pre-designed components (IP cores), which would impede auditing the whole system. Audits of the full source code should be easy in a security-focused application like this one. Also, I don't need the added convenience of drop-in solutions; since I only intend to communicate with the FPGA over SPI, I don't need to worry about how to implement high-complexity components such as Ethernet controllers.
+
+No room for even static multiple-issue.
+
+Pipeline bubbles from load-and-use hazards in AES lookups.
+
+\comment{Add lots of info about Verilog design decisions}

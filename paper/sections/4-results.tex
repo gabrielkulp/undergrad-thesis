@@ -1,4 +1,26 @@
 \section{Results}
-Software is slow. FPGA is hard.
+I implemented Yao's Garbled Circuits three ways. First, in software alone, I wrote idiomatic Python code for the garbler and evaluator. Next, I wrote an FPGA emulator (also in Python) and modified the evaluator code to send properly-packed coprocessor instructions to the emulated device. Finally, I wrote the FPGA configuration to externally behave the same way as the emulator. I ran comparative tests between the software-only system and the system with FPGA integration. Since my design goal is a coprocessor for mobile devices, speed and power efficiency were both concerns.
+
 \subsection{Speed}
+Performing a 64-bit integer division with the software-only implementation between Wi-Fi devices on LAN took 7.6 seconds on average. Evaluating the same circuit with the same devices, but with the FPGA attached to the evaluator, took 10.1 seconds on average. My analysis suggests that this slowdown occurred from idle time on the serial line as the evaluator performed byte manipulations and passed the next instruction off to the SPI serial library.
+
+Initial benchmarks of the serial connection indicated the possibility that it would be the bottleneck, even when sending instructions back-to-back. In practice, I added a counter to the coprocessor design to count the number of cycles between the end of one instruction and the start of the next, and found an average of over 5000 cycles spent idle. This number is not useful on its own, but with a calculation of the average number of cycles to process one gate, I can calculate the maximum speed of the coprocessor without concern for the serial or network connections upstream.
+
+Using a similar cycle counter, I found that XOR gates take 26 cycles on average and AND gates take 247. This time includes receiving the instructions as bits, shifting them into bytes, deserializing into addresses \& ciphertexts, fetching from memory, computing AES \& waiting to receive the correct ciphertext (in the case of an AND gate), and finally storing the computed active wire label. The variability (I provide the \textit{average} cycle time for each gate type) occurs
+because the serial module and the rest of the coprocessor operate in different clock domains, meaning that the number of coprocessor cycles per received byte depends on the relative frequencies and phases of each clock signal.
+
+In the 64-bit integer division circuit\cite{bristol} there are 12603 XOR gates and 4285 AND gates. With this ratio, there are an average of 80 cycles per gate. Combining this information with the 5000 cycles between gates, the serial utilization ratio is only 1.6\%, meaning that a fully-saturated link would be 62 times faster than what I measured.
+
+This analysis does not consider the potential speed improvements of higher clock speeds. I chose 30MHz for the main clock, but the place and route tool suggested I could go as high as 45MHz without redesigning anything. With redesign work, there are also several pipelines I could improve and processes I could stream instead of batch which would reduce the number of cycles spent processing a single gate and make room for a faster interface to the smartphone.
+
+Since my implementation used only the onboard SRAM, memory delays were a very small cost. Using the DRAM expansion could have decreased memory performance, but allowed for the evaluation of much larger circuits. \comment{Clarify this}
+
+
 \subsection{Power Efficiency}
+The iCE40 UP5K FPGA chip is marketed primarily as a low-power choice, with an advertized idle consumption of 75\textmu{}A and typical consumption of 1-10mA.\cite{LatticePage}. The expectation is therefore little to no impact on battery life from the FPGA itself. Other components, such as the FTDI USB interface chip or the USB daughterboard on the smartphone, could draw more power than the coprocessor itself. (I actually felt more heat coming from the FTDI chip than the FPGA while running tests, but I didn't have a way to properly measure power consumption.)
+
+The simplest way to test power consumption in a ``real-world'' way is to measure battery life. I modified the garbler and evaluator scripts to print a timestamp and loop once they finish a computation, and then I ran the evaluator script on the smartphone starting at full battery until it died. I ran both tests after leaving the battery plugged in at 100\% for several hours to hopefully mitigate any rebound effects of the battery chemistry.
+
+The smartphone lasted about one hour and 40 minutes, with or without the coprocessor attached. This was surprising, but believable considering the low-power nature of most components involved.
+
+I took no explicit measures to decrease power consumption, but several options are available with this chip. The SRAM on the die has a power saving mode which I could enable when waiting for the next gate, and I could drop the clock speed to have the minimum number of clock cycles between each incoming serial byte to still keep up with the stream. Measures like these could counteract the extra power draw that the DRAM expansion would incur. This could be a subject of future research.

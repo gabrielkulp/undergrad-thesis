@@ -15,7 +15,7 @@
   }
 }
 
-@INPROCEEDINGS{TinyGarble,
+@inproceedings{TinyGarble,
   author     = {E. M. {Songhori} and S. U. {Hussain} and A. {Sadeghi} and T. {Schneider} and F. {Koushanfar}},
   booktitle  = {2015 IEEE Symposium on Security and Privacy}, 
   title      = {TinyGarble: Highly Compressed and Scalable Sequential Garbled Circuits}, 
@@ -87,7 +87,7 @@
   note       = {\url{https://eprint.iacr.org/2014/756}},
   keywords   = {annotated_bib},
   annotation = {
-    This paper introduces an optimization called ``half gates'', in which the information sent from the garbler to the evaluator for AND gates can be reduced to two ciphertexts while maintaining compatibility with Free-XOR. This is the state-of-the-art optimization for general-purpose circuits of standard boolean gates.
+    This paper introduces an optimization called ``half gates'', in which the information sent from the garbler to the evaluator for AND gates can be reduced to two ciphertexts while maintaining compatibility with Free-XOR. This is the state-of-the-art optimization for general-purpose circuits of standard boolean gates. I don't plan to implement this technique because of time constraints.
   }
 }
 
@@ -130,5 +130,59 @@
   keywords   = {annotated_bib},
   annotation = {
     Dr. Rosulek's paper on MPC neural network evaluations. This paper describes a very similar use-case to what I am envisioning, with a garbler providing secure access to a pre-trained neural network without learning about the network's inputs. In Yao's framing, one party's inputs are the network's topology, weights, biases, and activation functions, and the other party's inputs are the data to be passed through the neural network. The paper goes into many implementation details, and the source code is somewhat active on GitHub, so this should be a very useful resource.
+  }
+}
+
+@misc{LatticePage,
+  publisher = {Lattice Semiconductor},
+  title = {{iCE}40 {U}ltra{P}lus},
+  howpublished = "\url{https://www.latticesemi.com/en/Products/FPGAandCPLD/iCE40UltraPlus}",
+  note = {product page},
+  annotation = {
+    The product page for my iCE40 UP5K FPGA.
+  }
+}
+
+@misc{bristol,
+  author = {David Archer and Victor Arribas Abril and Steve Lu and Pieter Maene and Nele Mertens and Danilo Sijacic and Nigel Smart},
+  title = {'{B}ristol {F}ashion' {MPC} Circuits},
+  howpublished = "\url{https://homes.esat.kuleuven.be/~nsmart/MPC/}",
+  annotation = {
+    Website with description of the Bristol Fashion circuit definition, along with the test circuits I used.
+  }
+}
+
+@misc{IceStorm,
+  author = {Claire Wolf and Mathias Lasser},
+  title = {Project {I}ce{S}torm},
+  howpublished = "\url{http://bygone.clairexen.net/icestorm/}",
+  annotation = {
+    Homepage for the FPGA toolchain reverse engineering project I used.
+  }
+}
+
+@misc{iCEBreaker,
+  author = {Piotr Esden-Tempski},
+  title = {{iCEB}reaker {FPGA}},
+  year = {2017},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/icebreaker-fpga/icebreaker}},
+  annotation = {
+    GitHub repo for the FPGA board design.
+  }
+}
+
+@inproceedings{beets,
+  author = {Bogetoft, Peter and Lund, Dan and Damgård, Ivan and Geisler, Martin and Jakobsen, Thomas and Krøigaard, Mikkel and Nielsen, Janus and Nielsen, Jesper and Nielsen, Kurt and Pagter, Jakob and Schwartzbach, Michael and Toft, Tomas},
+  year = {2009},
+  month = {02},
+  pages = {325-343},
+  title = {Secure Multiparty Computation Goes Live},
+  volume = {5628},
+  isbn = {978-3-642-03548-7},
+  doi = {10.1007/978-3-642-03549-4_20},
+  annotation = {
+    Real-world example of the Danish sugar beet auction. First major real-world use.
   }
 }
