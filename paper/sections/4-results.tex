@@ -1,5 +1,5 @@
 \section{Results}
-I implemented Yao's Garbled Circuits three ways. First, in software alone, I wrote idiomatic Python code for the garbler and evaluator. Next, I wrote an FPGA emulator (also in Python) and modified the evaluator code to send properly-packed coprocessor instructions to the emulated device. Finally, I wrote the FPGA configuration to externally behave the same way as the emulator. I ran comparative tests between the software-only system and the system with FPGA integration. Since my design goal is a coprocessor for mobile devices, speed and power efficiency were both concerns.
+I ran comparative tests between the software-only system and the system with FPGA integration. Since my design goal is a coprocessor for mobile devices, speed and power efficiency were both concerns.
 
 \subsection{Speed}
 Performing a 64-bit integer division with the software-only implementation between Wi-Fi devices on LAN took 7.6 seconds on average. Evaluating the same circuit with the same devices, but with the FPGA attached to the evaluator, took 10.1 seconds on average. My analysis suggests that this slowdown occurred from idle time on the serial line as the evaluator performed byte manipulations and passed the next instruction off to the SPI serial library.
@@ -17,7 +17,7 @@ Since my implementation used only the onboard SRAM, memory delays were a very sm
 
 
 \subsection{Power Efficiency}
-The iCE40 UP5K FPGA chip is marketed primarily as a low-power choice, with an advertized idle consumption of 75\textmu{}A and typical consumption of 1-10mA.\cite{LatticePage}. The expectation is therefore little to no impact on battery life from the FPGA itself. Other components, such as the FTDI USB interface chip or the USB daughterboard on the smartphone, could draw more power than the coprocessor itself. (I actually felt more heat coming from the FTDI chip than the FPGA while running tests, but I didn't have a way to properly measure power consumption.)
+The iCE40 UP5K FPGA chip is marketed primarily as a low-power choice, with an advertized idle power consumption of 75\textmu{}A and typical consumption of 1-10mA.\cite{LatticePage}. The expectation is therefore little to no impact on battery life from the FPGA itself. Other components, such as the FTDI USB interface chip or the USB daughterboard on the smartphone, could draw more power than the coprocessor itself. (I actually felt more heat coming from the FTDI chip than the FPGA while running tests, but I didn't have a way to properly measure power consumption.)
 
 The simplest way to test power consumption in a ``real-world'' way is to measure battery life. I modified the garbler and evaluator scripts to print a timestamp and loop once they finish a computation, and then I ran the evaluator script on the smartphone starting at full battery until it died. I ran both tests after leaving the battery plugged in at 100\% for several hours to hopefully mitigate any rebound effects of the battery chemistry.
 
