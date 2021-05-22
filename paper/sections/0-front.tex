@@ -1,4 +1,5 @@
 % Title page
+\iffalse
 \makeatletter
 \begin{titlepage}
 	\begin{center}
@@ -27,6 +28,7 @@
 \end{titlepage}
 \makeatother
 
+
 % Second page
 \begin{abstract}
 	Multi-party computation (MPC) is a field of study focused on devising cryptographic protocols that allow participants to learn the output of some function of their private inputs without trusting a third party to perform the computation. This is usually done at a large scale between data centers, with little emphasis on individuals' devices or mobile hardware. In this paper, I present a proof-of-concept implementation of two-party computation on a commodity smartphone paired with a low-power field-programmable gate array (FPGA). I compare the performance and power consumption of the system between a software-only setup and a setup with the FPGA coprocessor used for acceleration. I find a calculated $62\times$ speed improvement assuming a saturated serial connection, and no significant difference in the smartphone's battery life.
@@ -34,3 +36,61 @@
 
 \vfill
 \tableofcontents
+\fi
+
+
+%-------------------------------------------------------
+%	Thesis Pre-Text Info:
+%-------------------------------------------------------
+	%% Student Information:
+	\makeatletter
+	\def\StudentName{\@author}
+	\makeatother
+	\def\Degree{Science} % Science, Arts or Fine Arts
+	\def\Major{Computer Science}
+	\def\HonorsType{Associate} % Scholar or Associate
+	\def\StudentEmail{kulpga@oregonstate.edu}
+	\def\CommencementMonth{June 2021}
+
+	%% Thesis Information
+	\makeatletter
+	\def\ThesisTitle{\@title}
+	\makeatother
+	\def\DatePresented{May 28, 2021}
+	\def\keywords{MPC, Garbled Circuits, FPGA, Cryptography, IceStorm} % Up to five keywords
+
+	%% The committee
+	\def\Mentor{Mike Rosulek}
+	\def\MentorDept{Computer Science}
+	\def\CommitteeOne{Vincent Immler}
+	\def\CommitteeOneDept{Computer Science}
+	\def\CommitteeTwo{Rakesh Bobba}
+	\def\CommitteeTwoDept{Computer Science}
+
+	%%Un-comment and use any of the following that apply to you
+	%%------------------------------
+	%%Second Major:
+	%\def\SecondMajor{Mathematics}
+
+	%%Second Degree:
+	%\def\SecondDegree{Science} %Science, Arts or Fine Arts
+	%\def\SecondMajor{Mathematics}
+
+	%%International Degree:
+	%\def\SecondDegree{Arts}
+	%\def\SecondMajor{International Studies}
+	%%-------------------------
+
+\newgeometry{textheight=8.5in, textwidth=6in}
+\ThesisTitlePage
+\FlyLeaf
+\ThesisAbstractPage{\input{abstract.tex}}
+\ThesisCopyrightPage
+\ThesisTitlePage % yes, another one
+\ThesisApprovalPage
+\restoregeometry{}
+
+\tableofcontents
+
+\setcounter{page}{1}
+\pagestyle{plain}

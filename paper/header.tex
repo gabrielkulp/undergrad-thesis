@@ -1,12 +1,17 @@
-\documentclass[11pt, letterpaper]{article}
+\documentclass[12pt, letterpaper]{article}
 \usepackage[margin=4cm]{geometry}
+\usepackage{OSUHonorsThesis}
 
 \author{Gabriel Kulp}
 \title{Mobile Cryptographic Coprocessor for Privacy-Preserving Two-Party Computation}
 
-\setcounter{tocdepth}{2}% Allow only down to \subsectoin in ToC
+%\setcounter{tocdepth}{2} % allow only down to \subsection in ToC
 \usepackage[hidelinks]{hyperref}
 \usepackage{booktabs,textcomp}
+
+\usepackage{textcomp} % copyright symbol
+\usepackage{setspace} % line spacing
+\linespread{1} % change to two for double-spacing
 
 \usepackage[style=ieee]{biblatex}
 \addbibresource{references.bib}
@@ -38,7 +43,7 @@
 }
 \makeatother
 
-
+%% Drawing macros
 \newcommand{\littlekey}[2] {
 	\draw (#1)++(-.4,0) coordinate (center);
 	\draw (center) node[] {\tiny{#2}};

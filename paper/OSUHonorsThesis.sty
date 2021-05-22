@@ -1,0 +1,218 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Honors College Thesis Template
+% LaTeX Template
+% Version 1.2 (4/6/2020)
+%
+% Original author:
+% Keith Lippincott
+%
+% Revisions:
+% 1.2 - Julian Fortune & Alexander Guyer
+%
+% Defines commands to create the required
+% pages within the OSU Honors College Thesis
+%
+% Commands defined:
+% \FlyLeaf
+% \ThesisTitlePage
+% \ThesisAbstractPage{<abstract text>}
+% \ThesisCopyrightPage
+% \TheisApprovalPage
+%
+% Any Document Using this package must define the following macros:
+%     %Student Information:
+%     \def\StudentName{First Last}
+%     \def\Degree{Science} %Science, Arts, or Fine Arts
+%     \def\Major{Official name of major}
+%     \def\HonorsType{Scholar} %Scholar or Associate
+%     \def\StudentEmail{username@oregonstate.edu}
+%     \def\CommencementMonth{June 2016}
+%
+%	  %optional:
+%     %\def\SecondMajor{Official name of major} %If Same degree as above, does not require SecondDegree
+%     %\def\SecondDegree{Arts} &Science, Arts, or Fine Arts. Requires SecondMajor be defined.
+%
+%     %Thesis Information
+%     \def\ThesisTitle{Thesis Title}
+%     \def\DatePresented{Month dd, yyyy}
+%     \def\keywords{keyword1, keyword2, keyword3} %Up to five keywords
+%
+%     %The committee
+%     \def\Mentor{Name of Mentor (excluding Dr., PhD, etc.)}
+%     \def\MentorDept{Department}
+%     \def\CommitteeOne{Name of Committee Member (excluding Dr., PhD, etc.)}
+%     \def\CommitteeOneDept{Department}
+%     \def\CommitteeTwo{Name of Committee Member (excluding Dr., PhD, etc.)}
+%     \def\CommitteeTwoDept{Department}
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\ProvidesPackage{OSUHonorsThesis}[2015/12/16 v1.0 Honors College Page Commands]
+\usepackage[normalem]{ulem}
+
+%-------------------------------------------------------------------------------------
+%	BLANK PAGE
+%-------------------------------------------------------------------------------------
+\newcommand{\blankpage}{\newpage\pagestyle{empty}\null\newpage}
+\newcommand{\FlyLeaf}{\blankpage}
+
+%-------------------------------------------------------------------------------------
+%	TITLE PAGE
+%-------------------------------------------------------------------------------------
+\newcommand*{\ThesisTitlePage}{\begingroup
+\newpage
+\thispagestyle{empty}
+
+\begin{singlespace}
+  \begin{centering}
+
+    \ThesisTitle \\[.05\textheight]
+    {By\\ \StudentName}\\[0.167\textheight]
+
+    A THESIS \\[.04\textheight]
+    submitted to \\[.02\textheight]
+    Oregon State University \\[.02\textheight]
+    Honors College\\[.2\textheight]
+
+    in partial fulfillment of\\
+    the requirements for the\\
+    degree of\\[.05\textheight]
+
+  \ifdefined\SecondDegree
+      Honors Baccalaureate of \Degree\ in \Major \\
+        (Honors \HonorsType)\\[.02\textheight]
+
+      Honors Baccalaureate of \SecondDegree\ in \SecondMajor\\
+      (Honors \HonorsType)
+    \else
+      \ifdefined\SecondMajor
+              Honors Baccalaureate of \Degree\ in \Major\ and \SecondMajor\\
+              (Honors \HonorsType)
+        \else
+          Honors Baccalaureate of \Degree\ in \Major\\
+            (Honors \HonorsType)
+        \fi
+   \fi
+
+    \vfill
+
+    Presented \DatePresented \\
+    Commencement \CommencementMonth \\
+  \end{centering}
+\end{singlespace}
+\newpage
+\endgroup}
+
+%----------------------------------------------------------------------------------------
+%	ABSTRACT PAGE
+%----------------------------------------------------------------------------------------
+\newcommand*{\ThesisAbstractPage}[1]{\begingroup
+\newpage
+\thispagestyle{empty}
+
+\begin{singlespace}
+  \begin{centering}
+    {\large AN ABSTRACT OF THE THESIS OF}\\[.04\textheight]
+  \end{centering}
+
+  \begin{flushleft}
+    \ifdefined\SecondDegree
+        \StudentName\ for the degree of
+      \uline{Honors Baccalaureate of \Degree\ in \Major }
+        and \uline{Honors Baccalaureate of \SecondDegree\ in \SecondMajor}
+    \else
+        \ifdefined\SecondMajor
+            \StudentName\ for the degree of
+          \uline{Honors Baccalaureate of \Degree\ in \Major\ and \SecondMajor}
+        \else
+             \StudentName\ for the degree of \uline{Honors Baccalaureate of \Degree\ in \Major}
+        \fi
+    \fi
+    presented on \DatePresented. Title: \uline{\ThesisTitle}\\[.05\textheight]
+
+    Abstract approved:\\[.03\textheight]
+    \hrulefill\\
+  \end{flushleft}
+  \begin{flushright}
+    \Mentor\\[.03\textheight]
+  \end{flushright}
+\end{singlespace}
+
+#1
+
+\begin{singlespace}
+\begin{flushleft}
+Key Words: \keywords \\[.03\textheight]
+
+Corresponding e-mail address: \StudentEmail
+\vfill
+\vspace*{3\baselineskip} % Whitespace at the bottom of the page
+\end{flushleft}
+\end{singlespace}
+\newpage
+
+\endgroup}
+
+%----------------------------------------------------------------------------------------
+%	Copyright PAGE
+%----------------------------------------------------------------------------------------
+\newcommand*{\ThesisCopyrightPage}{\begingroup
+\begin{centering}
+  \begin{singlespace}
+  \vspace*{\baselineskip} % Whitespace at the top of the page
+
+  \textcopyright Copyright by \StudentName \\
+  \DatePresented \\
+  \end{singlespace}
+\end{centering}
+\newpage
+\endgroup}
+
+%----------------------------------------------------------------------------------------
+%	APPROVAL PAGE
+%----------------------------------------------------------------------------------------
+\newcommand*{\ThesisApprovalPage}{\begingroup
+\newpage
+\thispagestyle{empty}
+
+\begin{singlespace}
+  \begin{flushleft}
+    \ifdefined\SecondDegree
+    \uline{Honors Baccalaureate of \Degree\ in \Major\ }
+    and \uline{Honors Baccalaureate of \SecondDegree\ in \SecondMajor}
+    \else
+        \ifdefined\SecondMajor
+
+              {Honors Baccalaureate of \Degree\ in \Major\ and  \SecondMajor}
+        \else
+          \underline{Honors Baccalaureate of \Degree\ in \Major}
+        \fi
+    \fi
+    project of \StudentName\ presented on \DatePresented. \\[.1\textheight]
+
+
+    APPROVED:\\[.06\textheight]
+
+    \hrulefill\\
+    \Mentor, Mentor, representing \MentorDept\\[.05\textheight]
+
+    \hrulefill\\
+    \CommitteeOne, Committee Member, representing \CommitteeOneDept\\[.05\textheight]
+
+    \hrulefill\\
+    \CommitteeTwo, Committee Member, representing \CommitteeTwoDept\\[.09\textheight]
+
+    \hrulefill\\
+    Toni Doolen, Dean, Oregon State University Honors College
+
+    \vfill
+
+    I understand that my project will become part of the permanent collection of Oregon State University Honors College.  My signature below authorizes release of my project to any reader upon request.\\[.05\textheight]
+
+    \hrulefill\\
+    \centering\StudentName, Author
+  \end{flushleft}
+\end{singlespace}
+
+\newpage
+\endgroup}
