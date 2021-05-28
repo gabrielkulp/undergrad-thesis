@@ -18,11 +18,8 @@ def send_evaluator_input(sock: socket, gc: GarbledCircuit):
 		ot.send(sock, labels[0], labels[1])
 
 
+def _generate_wire_label(): return int.from_bytes(os.urandom(16), "little")
 def garble(circuit: Circuit):
-	# generate random labels
-	#_generate_wire_label = lambda: int.from_bytes(os.urandom(16), "little")
-	_generate_wire_label = lambda: 0
-
 	# The secret difference between True and False labels.
 	# Ensure color bit is set so T and F have opposite colors
 	delta = _generate_wire_label() | 1

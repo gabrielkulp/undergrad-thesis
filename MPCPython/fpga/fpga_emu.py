@@ -3,9 +3,9 @@ import aes
 from .fpga import Cmd
 
 _aes_keys  = aes.get_key_schedule(bytearray.fromhex("000102030405060708090a0b0c0d0e0f"))
-_to_bytes = lambda x: bytearray(x.to_bytes(17, "little")[:-1])
-hash_pair = lambda x, y: aes.encrypt(_aes_keys, _to_bytes((x^y)*2))
-c_idx     = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
+def _to_bytes(x):   return bytearray(x.to_bytes(17, "little")[:-1])
+def hash_pair(x,y): return aes.encrypt(_aes_keys, _to_bytes((x^y)*2))
+def c_idx(w1,w2):   return ((w1 & 1) << 1) | (w2 & 1)
 
 class FPGA():
 	def __init__(self):

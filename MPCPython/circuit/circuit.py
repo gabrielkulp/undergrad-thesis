@@ -8,17 +8,15 @@ GarbledCircuit = namedtuple("GarbledCircuit", ["input_labels", "circuit", "ctxts
 
 Gate = namedtuple("Gate", ["type", "inputs", "id"])
 
-def enum(**named_values):
-	return type("Enum", (), named_values)
+def enum(**named_values): return type("Enum", (), named_values)
 
 GateType = enum(AND=0, XOR=1, BUF=2, INV=3)
 
 # Utilities
-_aes_keys  = aes.get_key_schedule(bytearray.fromhex("000102030405060708090a0b0c0d0e0f"))
-_to_bytes = lambda x: bytearray(x.to_bytes(17, "little")[:-1])
-hash_pair = lambda x, y: int.from_bytes(aes.encrypt(_aes_keys, _to_bytes((x^y)*2)), "little")
-
-c_idx     = lambda w1,w2: ((w1 & 1) << 1) | (w2 & 1)
+_aes_keys = aes.get_key_schedule(bytearray.fromhex("000102030405060708090a0b0c0d0e0f"))
+def _to_bytes(x):   return bytearray(x.to_bytes(17, "little")[:-1])
+def hash_pair(x,y): return int.from_bytes(aes.encrypt(_aes_keys, _to_bytes((x^y)*2)), "little")
+def c_idx(w1,w2):   return ((w1 & 1) << 1) | (w2 & 1)
 
 
 # non-cryptographic for testing

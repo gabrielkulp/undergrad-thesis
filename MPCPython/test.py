@@ -119,7 +119,7 @@ def test_mpc(verbose: bool):
 		(-987243,-345),
 		(-9872,-333345)
 	]
-	circuit_file = "divide64.txt"
+	circuit_file = "adder64.txt"
 	c = circuit.read_from_file(circuit_file)
 
 	if verbose:
@@ -154,7 +154,7 @@ def test_mpc(verbose: bool):
 
 test_module = namedtuple("test_module", ["name", "function", "verbose"])
 tests = [
-		# name, function, verbose
+		#            name, function, verbose
 		test_module("AES", test_aes, False),
 		test_module("RSA", test_rsa, False),
 		test_module("MPC", test_mpc, True),

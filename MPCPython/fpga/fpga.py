@@ -3,8 +3,7 @@ from pyftdi.spi import SpiController
 from pyftdi.usbtools import UsbToolsError
 from pyftdi.ftdi import FtdiError
 # spellchecker: ignore ftdi pyftdi udev
-def enum(**named_values):
-	return type("Enum", (), named_values)
+def enum(**named_values): return type("Enum", (), named_values)
 
 Cmd = enum(addr=1, write=2, gates=3, read=4)
 # Cmd.addr:  set address for next read or write

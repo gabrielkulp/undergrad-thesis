@@ -3,7 +3,7 @@ import ot
 from .circuit import Circuit, GarbledCircuit, GateType, hash_pair, c_idx, int_to_wires, wires_to_int
 from fpga import FPGA, get_fpga, Cmd
 
-_to_addr = lambda x: x.to_bytes((x.bit_length()+7)//8, "little")[:2]
+def _to_addr(x): return x.to_bytes((x.bit_length()+7)//8, "little")[:2]
 #fpga = get_fpga()
 
 

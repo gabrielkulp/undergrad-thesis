@@ -25,31 +25,29 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
 	listener.bind((args.address, args.port))
 	listener.listen()
 	print(f"Listening on {args.address}:{args.port}...")
-	while True:
-		try:
-			conn, addr = listener.accept()
-		except KeyboardInterrupt:
-			print(" Shutting down")
-			break
+	try:
+		conn, addr = listener.accept()
+	except KeyboardInterrupt:
+		print(" Shutting down")
+		exit()
 
-		print(f"\nConnected to {addr[0]}:{addr[1]}")
-		print(datetime.now())
+	print(f"\nConnected to {addr[0]}:{addr[1]}")
 
-		with conn as s:
-			print("Reading circuit file")
-			c = circuit.read_from_file(args.CIRCUIT)
+	with conn as s:
+		print("Reading circuit file")
+		c = circuit.read_from_file(args.CIRCUIT)
 
-			print("Generating input labels")
-			gc = circuit.garble(c)
+		print("Generating input labels")
+		gc = circuit.garble(c)
 
-			print("Garbling and sending my inputs")
-			circuit.send_garbler_input(s, gc, args.INPUT)
+		print("Garbling and sending my inputs")
+		circuit.send_garbler_input(s, gc, args.INPUT)
 
-			print("OT-ing Bob's inputs...")
-			circuit.send_evaluator_input(s, gc)
+		print("OT-ing Bob's inputs...")
+		circuit.send_evaluator_input(s, gc)
 
-			print("Generating and sending ctxts...")
-			circuit.send_garbled_gates(s, gc)
+		print("Generating and sending ctxts...")
+		circuit.send_garbled_gates(s, gc)
 
-			s.recv(1) # listen for client close
-			print("Done!")
+		s.recv(1) # listen for client close
+		print("Done!")
