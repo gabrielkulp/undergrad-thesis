@@ -106,7 +106,9 @@
 
 \begin{frame}[plain]
 	\centering
-	\large\color{red!60!black}
+	\vspace{1.5cm}
+
+	\large\color{red!70!black}
 	Mobile Cryptographic Coprocessor for Privacy-Preserving Two-Party Computation
 
 	\normalsize\vspace{1cm}\color{black}
@@ -976,15 +978,17 @@ Okay, let's talk about what I actually did and try to describe it in normal CPU 
 
 (adv) The three instructions for computing on data already inside are for three kinds of logic gates. I've already talked about AND and XOR gates, but I also support the buffer gate, which just copies its input to its output. You'll have to trust me that that's useful here. In the case of the AND gate, that single instruction means that the coprocessor needs to do two memory lookups, an AES encryption, an XOR, and then write the result back to a new location in memory. It's a similar story for the other gates.
 
-(adv) Unlike a full-fledged CPU, there's no program counter. Usually CPUs read their own instructions, so they need a register to store the next instruction to read. In my case though, instructions come in over USB.
+(adv) Unlike a full-fledged CPU, there's no program counter. Usually CPUs read their own instructions, so they need a register to store the location of the next instruction to read. In my case though, instructions are streamed in over USB.
 
 (adv) This also means that there are no branching instructions. In other words, the coprocessor never needs to make a decision. Normally a CPU would be able to change its program counter dynamically based on conditions, but none of that happens here.
 
 (adv) I kind of already said this, but I would classify this is a memory-memory architecture, meaning that its instructions describe an operation to do to values stored in memory. This is in contrast to a register-memory architecture which executes operations where one operand is in a register and the other can be in memory. There are also load-store architectures which only do operations between registers and require separate instructions to move data from memory to registers or back again.
 
-(adv) I kind of made this term up, but I'd also call my design event-based, meaning that there's no central control unit orchestrating how the various parts work together. Instead those parts talk directly to each other. For example, the memory controller waits to store a value until the encryption unit raises an event saying it's done computing. I'm borrowing the term from event-based programming, where you write modules that subscribe to events that other modules can raise.
+(adv) I kind of made this term up, but I'd also call my design event-based, meaning that there's no central control unit orchestrating how the various parts work together. Instead those parts talk directly to each other. For example, the memory controller waits to store a value until the encryption unit raises an event saying it's done computing. I'm borrowing the term from event-based programming, where you write modules that subscribe to events that other modules can raise. There might be a better name for this in hardware, but I don't know it.
 
-(adv) Finally, I'll assert that this actually does a lot to make the design extensible. Right now I'm just using on-board memory, but if I wanted to use a memory expansion, I would need to replace the memory controller module. Since the next step waits until memory finishes, that means that I don't need to change anything else about the design if the new memory controller is faster or slower than the old one. If there was a central control unit, I might need to adjust counters to account for the new timing to get everything synchronized.
+I individually pipelined each of these modules that can be, but I can't pipeline between them because everything here is a pipeline hazard, meaning the input to each module depends on the output of the last. Also since every value from memory appears random, speculative execution isn't much of an option.
+
+(adv) Finally, I'll assert that this event-based idea actually does a lot to make the design extensible. Right now I'm just using on-board memory, but if I wanted to use a memory expansion, I would need to replace the memory controller module. Since the next step waits until memory finishes, that means that I don't need to change anything else about the design if the new memory controller is faster or slower than the old one. If there was a central control unit, I might need to adjust counters to account for the new timing to get everything synchronized.
 
 Alright, that's all I have to say on that topic for now. Again, feel free to ask me anything about this stuff at the end. We're almost there!
 
