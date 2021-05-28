@@ -12,7 +12,7 @@ Support for efficient MPC in mobile devices could open the doors to many other p
 One obstacle to widespread adoption of MPC is the poor efficiency of execution. The protocol's cryptographic overhead slows the computation by several orders of magnitude (see Sec.~\ref{sec:gc}). To address this, I propose a coprocessor to accelerate the client's workload. This coprocessor is attached to a smartphone to handle the most power-hungry aspects of the calculation more efficiently than the phone's built-in processor. In theory, this technique could be used to make MPC a common task in the same way that other cryptographic operations (like the TLS handshake) are widespread and efficient.
 
 \subsection{Scope}
-In this thesis, I implement Yao's Garbled Circuits in software, and compare its system resource utilization (CPU time and RAM usage) and power consumption to a second, interoperable implementation in which the smartphone interfaces with an FPGA\@. It is out of scope to draw comparisons to other implementations or design a practical user interface.
+In this thesis, I implement Yao's Garbled Circuits in software, and compare its execution time and power consumption to a second, interoperable implementation in which the smartphone interfaces with an FPGA\@. It is out of scope to draw comparisons to other implementations or design a practical user interface.
 
 I will not perform hardware modifications to the smartphone, nor design a new device as a stand-in; this limits the throughput of the data link between the smartphone and FPGA.
 

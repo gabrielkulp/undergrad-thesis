@@ -13,7 +13,8 @@ In the 64-bit integer division circuit\cite{bristol} there are 12603 XOR gates a
 
 This analysis does not consider the potential speed improvements of higher clock speeds. I chose 30MHz for the main clock, but the place and route tool suggested I could go as high as 45MHz without redesigning anything. With redesign work, there are also several pipelines I could improve and processes I could stream instead of batch which would reduce the number of cycles spent processing a single gate and make room for a faster interface to the smartphone.
 
-Since my implementation used only the onboard SRAM, memory delays were a very small cost. Using the DRAM expansion could have decreased memory performance, but allowed for the evaluation of much larger circuits. \comment{Clarify this}
+%Since my implementation used only the onboard SRAM, memory delays were a very small cost. Using the DRAM expansion could have decreased memory performance, but allowed for the evaluation of much larger circuits.
+\comment{Clarify this?}
 
 
 \subsection{Power Efficiency}

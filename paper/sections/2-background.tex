@@ -96,7 +96,8 @@ You can picture this as Bob sending Alice two empty boxes, labeled 0 and 1, show
 	\label{fig:OT}
 \end{figure}
 
-The process is similar to that of the Diffie-Hellman key exchange used when initiating an HTTPS connection (and many other secure protocols)\cite{FirstOT}. Alice generates and sends Bob a public key, then encrypts and sends two random messages (preparation material for Bob's boxes). Bob then chooses one of these messages and combines it with an encrypted random value of his own and sends it back to Alice. Alice receives Bob's encrypted choice (essentially two boxes combined into one value) and removes her own random value from before (opening the box), \comment{this really needs more work. Or do I just direct the reader to Wikipedia?}
+%The process is similar to that of the Diffie-Hellman key exchange used when initiating an HTTPS connection (and many other secure protocols)\cite{FirstOT}. Alice generates and sends Bob a public key, then encrypts and sends two random messages (preparation material for Bob's boxes). Bob then chooses one of these messages and combines it with an encrypted random value of his own and sends it back to Alice. Alice receives Bob's encrypted choice (essentially two boxes combined into one value) and removes her own random value from before (opening the box),
+\comment{this really needs more work. Or do I just direct the reader to Wikipedia?}
 
 \subsection{Garbled Circuits}\label{sec:gc}
 Boolean operations are represented by tables, but these tables don't have to map Trues and Falses, and in fact the outputs don't have to match the inputs at all. For example, in Fig.~\ref{fig:circuit} and Tab.~\ref{tab:truth-table}, wire A could instead have labels of ``apple'' and ``pear'' while wire B has labels of $\Psi$ and $\Xi$. Then gate C (the AND gate on the left) would then have a truth table that dictates the output label when the inputs are ``apple'' and $\Xi$ or any other combination. Naturally, one can still evaluate a circuit without knowing which arbitrary labels correspond to True. This forms the basis for garbling.
@@ -131,7 +132,7 @@ Careful readers will have noticed a problem, though. How can Bob get the keys th
 
 Alice generates the true and false keys for every input bit. She can just give Bob the right key for her own input, since Bob doesn't know what it means, but she can't give Bob both keys for each of his inputs or he would be able to speculatively execute the circuit and he might be able to figure out her input. Bob also can't just ask for the key that corresponds to his input, because then Alice would know his input trivially. Instead, Bob requests the keys for each bit of his input with an oblivious transfer and Alice therefore does not know which keys he's receiving. Bob also does not receive any extra keys that would allow him to snoop on other possible circuit evaluation outcomes.
 
-\begin{figure}[hb]
+\begin{figure}[h]
 	\centering
 	\begin{tikzpicture}[
 		clearbox/.style={rectangle, draw, thick, minimum size=10mm},
@@ -185,7 +186,7 @@ This presents an asymmetry in which one party must calculate each gate of the ci
 There have been several improvements to Yao's original protocol since it was published\cite{gentle}. For example, in the original protocol, it is unclear how the evaluator knows which row of a truth table to decrypt, since there is no way to observe a key and ciphertext and know that they go together. This leads to ``trial decryptions'' where valid keys are padded in some recognizable way, and the evaluator attempts to decrypt each row until they find the result with the proper padding. Clearly this is not efficient and improvements are desireable.
 
 \subsection{Improvements on the Protocol}
-Yao's original protocol wasn't described very clearly. In particular, how does the evaluator know which row of the table to decrypt? One solution is trial decryptions. The garbler chooses keys to end with a bunch of zeros, and the evaluator decrypts until they find the one that ends with zeros. This is really bad for performance. Also there are so many ciphertexts to send around and that just sucks. Thankfully, some smart people have found improvements to the original protocol that don't impact the security. \comment{This is too much of a repeat of the previous section. Also humorously informal.}
+Yao's original protocol wasn't described very clearly. In particular, how does the evaluator know which row of the table to decrypt? One solution is trial decryptions. The garbler chooses keys to end with a bunch of zeros, and the evaluator decrypts until they find the one that ends with zeros. This is bad for performance and the number of ciphertexts to send creates a bottleneck in transmission. Research into improvements has been fruitful, and I detail the most relevant optimizations below.
 
 \subsubsection{Permute and Point}
 This first optimization seeks to avoid trial decryptions by helping Bob know which ciphertext to decrypt given only the keys he already has. The clever solution is to append a 0 or 1 to each key such that matching pairs always have one of each bit (called color bits)\cite{gentle}. Note that these color bits are arbitrary and do not necessarily correspond to True and False.
