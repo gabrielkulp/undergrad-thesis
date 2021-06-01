@@ -1,10 +1,8 @@
 \section{Conclusion}
-Most focus is on data centers and there doesn't seem to be a lot of work on low-power devices like smartphones and \textit{small} FPGAs. I hope that doing anything with these devices makes me a more valuable member of the community. Developing in constrained environments inevitably helps the unconstrained ones, too.
+My vision is to make privacy-preserving computations more common. In the United States, HIPAA and FERPA laws protect healthcare and student records respectively, but these laws prevent analysis that could have great value to society. MPC allows calculations on these data that no single party could ethically or legally compute on their own.
 
-There's work on cloud computing and usage in machine learning\cite{NeuralNets}, so I want to show that that could be applied to our mobile devices. Obviously we wouldn't really have an FPGA dangling from our phones, but dedicated hardware could be cool.
+Most academic focus in the field of MPC is on data centers, with many fewer published attempts at enabling low-power devices like smartphones and small FPGAs to participate. Working with these low-power devices has value to the cryptography community: developing in constrained environments inevitably contributes to the less-constrained ones, and the wide-spread nature of mobile devices offers many opportunities for real-world applications of privacy-preserving cryptography.
 
-I think this could be viable with a faster phone-to-FPGA connection. We might get to a situation where throughput is the bottleneck, and then with 5G or whatever then that's probably a good place to be.
+Our devices already have efficient hardware support for some cryptographic operations, opening the doors to online banking, secure video calling, and other private transactions. I would like to see mobile devices that can efficiently do MPC with each other or cloud services to open the doors to even more private applications. 
 
-Attaching a low-end FPGA has significant performance potential for the MPC workload on a low-end mobile processor.
-
-In conclusion, MPC is a kind of cryptography that allows a whole new class of problems to be solved, but it takes a lot of computing power. MPC could be adopted more readily if there was an easy way to offload that work onto specially-designed hardware. In my project, I conclude that this coprocessor is a feasible architecture to this end with significant performance potential.
+This thesis presents a feasible architecture with significant performance potential for low-end mobile devices. With a faster CPU-to-coprocessor connection or the coprocessor instructions implemented as en extension of existing mobile SoC instructions, mobile MPC could be constrained only by the speed of the network connection. Future work promises to be exciting.

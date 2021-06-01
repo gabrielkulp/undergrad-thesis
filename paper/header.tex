@@ -21,6 +21,9 @@
 \usetikzlibrary{decorations.pathmorphing}
 \usetikzlibrary{calc, positioning}
 \usetikzlibrary{shapes.arrows}
+\usetikzlibrary{calc,decorations.markings}
+\usetikzlibrary{arrows,shapes}
+\usetikzlibrary{arrows.meta}
 \ctikzset{logic ports=ieee,logic ports/scale=1}
 
 \makeatletter
@@ -34,12 +37,12 @@
 
 %%%%%   temporary stuff useful while writing   %%%%%
 \makeatletter
-\setkeys{Gin}{draft=false} % show graphics even in draft mode
+%\setkeys{Gin}{draft=false} % show graphics even in draft mode
 \usepackage{ifdraft, xcolor, xspace}
 \newcommand{\comment} [1] {%
 	\ifdraft%
 		{{\color{red}\textit{#1}}\xspace}% else:
-		{\@latex@warning{Unresolved comment outside draft}}%
+		{\@latex@warning{Unresolved comment: #1}}%
 }
 \makeatother
 

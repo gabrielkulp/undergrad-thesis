@@ -6,15 +6,26 @@ Performing a 64-bit integer division with the software-only implementation betwe
 
 Initial benchmarks of the serial connection indicated the possibility that it would be the bottleneck, even when sending instructions back-to-back. In practice, I added a counter to the coprocessor design to count the number of cycles between the end of one instruction and the start of the next, and found an average of over 5000 cycles spent idle. This number is not useful on its own, but with a calculation of the average number of cycles to process one gate, I can calculate the maximum speed of the coprocessor without concern for the serial or network connections upstream.
 
+\begin{table}
+	\centering
+	\begin{tabular}{c r r r}
+		\toprule
+		Gate type & Cycles & Time at 45MHz & Gates per second\\
+		\midrule
+		AND       &    247 &        5488ns &  182000\\
+		XOR       &     26 &         578ns & 1730000\\
+		\bottomrule
+	\end{tabular}
+	\caption{Performance of each gate type. The right column assumes instructions are sent back-to-back without idle time on the serial connection.}%
+	\label{tab:perf}
+\end{table}
+
 Using a similar cycle counter, I found that XOR gates take 26 cycles on average and AND gates take 247. This time includes receiving the instructions as bits, shifting them into bytes, deserializing into addresses \& ciphertexts, fetching from memory, computing AES \& waiting to receive the correct ciphertext (in the case of an AND gate), and finally storing the computed active wire label. The variability (I provide the \textit{average} cycle time for each gate type) occurs
 because the serial module and the rest of the coprocessor operate in different clock domains, meaning that the number of coprocessor cycles per received byte depends on the relative frequencies and phases of each clock signal.
 
 In the 64-bit integer division circuit\cite{bristol} there are 12603 XOR gates and 4285 AND gates. With this ratio, there are an average of 80 cycles per gate. Combining this information with the 5000 cycles between gates, the serial utilization ratio is only 1.6\%, meaning that a fully-saturated link would be 62 times faster than what I measured.
 
 This analysis does not consider the potential speed improvements of higher clock speeds. I chose 30MHz for the main clock, but the place and route tool suggested I could go as high as 45MHz without redesigning anything. With redesign work, there are also several pipelines I could improve and processes I could stream instead of batch which would reduce the number of cycles spent processing a single gate and make room for a faster interface to the smartphone.
-
-%Since my implementation used only the onboard SRAM, memory delays were a very small cost. Using the DRAM expansion could have decreased memory performance, but allowed for the evaluation of much larger circuits.
-\comment{Clarify this?}
 
 
 \subsection{Power Efficiency}

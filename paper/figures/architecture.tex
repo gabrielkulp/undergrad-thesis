@@ -1,0 +1,84 @@
+\newcommand{\busline}[1]{-- node[below=1pt] {\tiny #1}}
+\newcommand{\busLP}[1]{-| node[below=1pt] {\tiny #1}}
+\newcommand{\busPL}[1]{|- node[below=1pt] {\tiny #1}}
+\begin{tikzpicture}[scale=.67, every node/.style={scale=.67},
+		>=stealth,
+		external pins width=0,
+		decoration={
+			markings,
+			mark= at position 0.5 with {\node[font=\tiny] {/};}
+		},
+		bus/.style={postaction={decorate}}
+	]
+	\ctikzset{multipoles/dipchip/width=3}
+
+	% SPI CTL module and SPI connection
+	\node at (0,0) [dipchip, num pins=12, hide numbers, no topmark] (spi) {SPI CTL};
+	\node [left,  font=\tiny] at (spi.bpin 12) {DMA Addr};
+	\node [left,  font=\tiny] at (spi.bpin 11) {DMA Data};
+	\node [left,  font=\tiny] at (spi.bpin 10) {Gate ID};
+	\node [left,  font=\tiny] at (spi.bpin  9) {Input ID};
+	\node [left,  font=\tiny] at (spi.bpin  8) {CTXT};
+	\node [left,  font=\tiny] at (spi.bpin  7) {Gate Type};
+	\node [below, font=\tiny] at (spi.n)       {SPI};
+	\draw [very thick, <->] (spi.n) |- ++ (-1,1) node[rectangle, left, draw] {SPI};
+
+
+	% Label CTL module and SPI connection
+	\node at (15,0) [dipchip, num pins=12, hide numbers, no topmark] (arr) {Label CTL};
+	\node [right, font=\tiny] at (arr.bpin 1)  {DMA Addr};
+	\node [right, font=\tiny] at (arr.bpin 2)  {DMA Data};
+	\node [right, font=\tiny] at (arr.bpin 3)  {Addr};
+	\node [right, font=\tiny] at (arr.bpin 6)  {Label In};
+	\node [left,  font=\tiny] at (arr.bpin 7)  {Label Out};
+	\node [below, font=\tiny] at (arr.n)       {RAM};
+	\draw [very thick, <->] (arr.n) |- ++(1,1) node[rectangle, right, draw] {RAM};
+
+	% DMA connection
+	\draw[bus,->]  (spi.bpin 12) \busline{12}  (arr.bpin 1);
+	\draw[bus,<->] (spi.bpin 11) \busline{128} (arr.bpin 2);
+
+	% Wire IDs as Addr
+	\draw[bus,->]  (spi.bpin 10) \busline{12} ++(4.04,0) coordinate(tmp);
+	\node at (tmp) [muxdemux, anchor=blpin 1, muxdemux def={Lh=2, Rh=1.3333, NL=2, NB=0, NR=1,w=.5}] (idMux) {};
+	\draw[bus,->]  (spi.bpin 9)  \busline{12} (idMux.blpin 2);
+	\draw[bus]   (idMux.brpin 1) \busline{12} ++ (3.7,0) coordinate(tmp);
+	\draw[->] (tmp) |- (arr.bpin 3);
+
+	%%% The big mess %%%
+
+	% left and right mux
+	\node at (4,-3) [muxdemux, muxdemux def={Lh=2, Rh=3, NL=1, NB=0, NR=3, NT=1,w=.7}] (lMux) {};
+	\node at (11,-3) [muxdemux, muxdemux def={Lh=3, Rh=2, NL=3, NB=0, NR=1, NT=1,w=.7}] (rMux) {};
+	% middle mux and bottom wires
+	\draw (rMux.lpin 1)++(-3.5,0) node [muxdemux, anchor=brpin 1, muxdemux def={Lh=1.3333, Rh=2, NL=1, NB=0, NR=2, NT=1,w=.5}] (AESMux) {};
+	\draw[bus,->] (AESMux.rpin 2) \busline{128} (rMux.lpin 2);
+	\draw[bus,->] (lMux.rpin 3) \busline{128} (rMux.lpin 3);
+	% gate type lines
+	\draw[bus] (spi.bpin 7) \busline{2} (spi.bpin 7-|rMux.tpin 1) coordinate(tmp);
+	\draw[->] (tmp) -- (rMux.tpin 1);
+	\draw[{Circle[length=1mm, width=1mm]}->, shorten <=-.5mm] (spi.bpin 7-|AESMux.tpin 1) -- (AESMux.tpin 1);
+	\draw[{Circle[length=1mm, width=1mm]}->, shorten <=-.5mm] (spi.bpin 7-|lMux.tpin 1) -- (lMux.tpin 1);
+	% mixer and register at the beginning
+	\draw (lMux.rpin 2) ++ (2,0) node [mixer,scale=.25] (mix) {};
+	\draw[bus] (mix.e) \busline{128} ++ (.3,0) coordinate(tmp);
+	\draw[->] (tmp) |- (AESMux.lpin 1);
+	\draw[bus,->] (lMux.rpin 2) \busline{128} (mix.w);
+	\draw[bus,->] (lMux.rpin 1) \busline{128} ++ (1,0) node[muxdemux, anchor=blpin 1, muxdemux def={Lh=1.2, Rh=1.2, NL=1, NB=0, NR=1, w=.3}] (reg) {};
+	\draw[bus] (reg.rpin 1) \busline{128} (reg.rpin 1-|mix.n) coordinate(tmp);
+	\draw[->] (tmp) -- (mix.n);
+	% AES and XOR
+	\draw[bus,->] (AESMux.rpin 1) \busline{128} ++ (1,0) node[rectangle, right, draw] (aes) {AES};
+	\draw[bus,->] (aes.e|-rMux.lpin 1) \busline{128} ++ (.58,0) coordinate(tmp);
+	\node at (tmp) [adder,anchor=w,scale=.25] (xor) {};
+	\draw[bus,->] (xor) \busline{128} (rMux.lpin 1);
+	\draw[bus] (spi.bpin 8) \busline{128} (spi.bpin 8-|xor.n) coordinate(tmp);
+	\draw[->] (tmp) -- (xor.n);
+	% output
+	\draw (rMux.rpin 1) -- ++ (.5,0) coordinate(tmp) -- (tmp|-arr.bpin 6) coordinate(tmp);
+	\draw[bus,->] (tmp) \busline{128} (arr.bpin 6);
+	% input
+	\draw (arr.bpin 7) -| ++ (.5,-3) coordinate(tmp1) (lMux.lpin 1) ++ (-.5,0) coordinate(tmp2);
+	\draw[bus] (tmp1) \busline{128} (tmp1-|tmp2) coordinate(tmp);
+	\draw[->] (tmp) |- (lMux.lpin 1);
+\end{tikzpicture}
