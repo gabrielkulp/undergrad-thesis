@@ -1,12 +1,12 @@
 \section{Results}
-I ran comparative tests between the software-only system and the system with FPGA integration. Since my design goal is a coprocessor for mobile devices, speed and power efficiency were both concerns.
+I ran comparative tests between the software-only system and the system with FPGA integration\footnote{\url{https://github.com/gabrielkulp/undergrad-thesis}}. Since my design goal is a coprocessor for mobile devices, speed and power efficiency were both concerns.
 
 \subsection{Speed}
 Performing a 64-bit integer division with the software-only implementation between Wi-Fi devices on LAN took 7.6 seconds on average. Evaluating the same circuit with the same devices, but with the FPGA attached to the evaluator, took 10.1 seconds on average. My analysis suggests that this slowdown occurred from idle time on the serial line as the evaluator performed byte manipulations and passed the next instruction off to the SPI serial library.
 
 Initial benchmarks of the serial connection indicated the possibility that it would be the bottleneck, even when sending instructions back-to-back. In practice, I added a counter to the coprocessor design to count the number of cycles between the end of one instruction and the start of the next, and found an average of over 5000 cycles spent idle. This number is not useful on its own, but with a calculation of the average number of cycles to process one gate, I can calculate the maximum speed of the coprocessor without concern for the serial or network connections upstream.
 
-\begin{table}
+\begin{table}[ht]
 	\centering
 	\begin{tabular}{c r r r}
 		\toprule
@@ -16,7 +16,7 @@ Initial benchmarks of the serial connection indicated the possibility that it wo
 		XOR       &     26 &         578ns & 1730000\\
 		\bottomrule
 	\end{tabular}
-	\caption{Performance of each gate type. The right column assumes instructions are sent back-to-back without idle time on the serial connection.}%
+	\caption{Coprocessor performance for each gate type. The right column assumes instructions are sent back-to-back without idle time on the serial connection. \texttt{nextpnr} reported a maximum clock speed near 45MHz.}%
 	\label{tab:perf}
 \end{table}
 

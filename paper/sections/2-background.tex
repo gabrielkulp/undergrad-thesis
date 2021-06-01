@@ -52,7 +52,7 @@ The Boolean circuit shown in Fig.~\ref{fig:circuit} is too small to have much pr
 \subsection{Oblivious Transfers}
 An oblivious transfer is a cryptographic primitive used in garbled circuits. It allows Bob to make a choice about which item to receive from Alice, without Alice knowing which item Bob chose, and without Bob learning anything about the item he didn't choose\cite{FirstOT}.
 
-You can picture this as Bob sending Alice two empty boxes, labeled 0 and 1, shown in Fig.~\ref{fig:OT}. Alice puts messages in each box, locks them, and sends them back, but Bob only made the key to box 1, a choice he made up front before sending anything to Alice. Alice doesn't know which message Bob got, since the locks on the boxes look the same to her. Bob doesn't learn anything about the other message since the cryptography involved prevents the possibility of Bob creating two functional keys.
+You can picture this as Bob sending Alice two empty boxes, labeled 0 and 1, shown in Fig.~\ref{fig:OT}. Alice puts messages in each box, locks them, and sends them back, but Bob only made the key to box 1, a choice he made up-front before sending anything to Alice. Alice doesn't know which message Bob got, since the locks on the boxes look the same to her. Bob doesn't learn anything about the other message since the cryptography involved prevents the possibility of Bob creating two functional keys.
 
 \begin{figure}[ht]
 	\centering

@@ -38,29 +38,44 @@ The garbler role is fulfilled by a single-client server. It listens for new conn
 \subsubsection{Evaluator}
 I implemented the evaluation logic three ways. First, I write idiomatic Python code in software alone. Next, I wrote an FPGA emulator (also in Python) and modified the evaluation logic to send properly-packed coprocessor instructions to the emulated device. Finally, once I had finished the hardware implementation, I simply swapped the endpoint from the emulated coprocessor to the real one.
 
-In the default configuration, the evaluator script checks for the presence of the coprocessor, and falls back to the software implementation if it is not available.
+In the default configuration, the evaluator script checks for the presence of the coprocessor, and falls back to the software implementation if needed.
 
 \subsection{Hardware}\label{sec:hw}
-I chose the Pine64 Pinephone\cite{Pinephone}\footnote{Allwinner A64 quad-core SoC, 3GB RAM, USB 2.0 over type-C.} for the mobile smartphone platform since it fully supports a typical Linux environment, allowing me to use the same source code for the client and server\footnote{8-core Intel Xeon E3-1505M CPU, 32GB RAM (evaluator is the bottleneck)} software. The Pinephone also includes a USB port accessible to userspace tools in the same way as on a typical laptop or desktop, meaning that the interface to the coprocessor is the same regardless of the platform. I chose the iCEBreaker FPGA development board\cite{iCEBreaker} (with the Lattice iCE40 UP5K FPGA chip\cite{LatticePage}) for its low cost, low power consumption, open-source board design, open-source development toolchain, and accessible community.
+I chose the Pine64 Pinephone\cite{Pinephone}\footnote{Allwinner A64 quad-core SoC, 3GB RAM, USB 2.0 over type-C} for the mobile smartphone platform since it fully supports a typical Linux environment, allowing me to use the same source code for the client and server\footnote{8-core Intel Xeon E3-1505M CPU, 32GB RAM (evaluator is the bottleneck)} software. The Pinephone also includes a USB port accessible to userspace tools in the same way as on a typical laptop or desktop, meaning that the interface to the coprocessor is the same regardless of the platform. I chose the iCEBreaker FPGA development board\cite{iCEBreaker} (with the Lattice iCE40 UP5K FPGA chip\cite{LatticePage}) for its low cost, low power consumption, open-source board design, open-source development toolchain\footnote{\url{https://github.com/YosysHQ}} (utilities listed in Tab.~\ref{tab:versions}), and accessible community.
 
 I prioritized finding an open-source option because of the importance of public audits for all security-related code. One downside of using the open-source toolchain is that closed-source pre-designed modules (IP cores) cannot realistically be sold or licensed for use. This is not a concern for me because of my goal of allowing total audits and because I do not need the convenience of drop-in solutions like Ethernet controllers or other high-complexity high-performance components that would require the proprietary expertise of the manufacturer.
 
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{l c c c}
+		\toprule
+		Utility       & Executable                         & Version  & Commit \\
+		\midrule
+		IceStorm      & \texttt{icepack}, \texttt{iceprog} & r777     & \texttt{c495861} \\
+		Yosys         & \texttt{yosys}                     & 0.9+4052 & \texttt{0ccc722} \\
+		Next Gen P\&R & \texttt{nextpnr}                   & r3529    & \texttt{5a41d20} \\
+		\bottomrule
+	\end{tabular}
+	\caption{FPGA toolchain utility versions. ``P\&R'' is an abbreviation of ``Place and Route.'' All tools were built from source from the GitHub commit matching the hash in the right column. These tools can be found on the Yosys Open SYnthesys Suite GitHub page: \url{github.com/YosysHQ}}%
+	\label{tab:versions}
+\end{table}
+
 \subsubsection{Execution}
-\begin{figure}
+
+I used an event-based design inside the FPGA rather than a central control unit that issues control signals with fixed timings. For example, the memory controller emits a signal when it has finished fetching a value, and this signal is fed to the next component which uses the fetched value. Sequential and combinational logic considering the current gate type determines which ``done'' signals are forwarded to ``start'' signals.
+
+There are only six instructions: set address, read, write, AND, XOR, and BUF. The first three are for direct memory access (DMA) over the serial connection for setting inputs, reading outputs, and debugging. The latter three instructions are garbled gates to evaluate. Each gate instruction begins with the gate type (opcode), then the wire ID for each input. In the case of the AND instruction, $128*3=384$ bits of ciphertexts follow. All gate instructions end with the gate ID, which is also the wire ID at which to store the gate's output. Since there are so few instructions, and the most common instructions (the gates) each do multiple memory operations, this coprocessor can be considered to have a CISC (complex instruction set computer) architecture.
+
+\begin{figure}[ht]
 	\centering
 	\input{figures/architecture.tex}
 	\caption{Simplified coprocessor architecture. The main memory-memory logic is implemented in the bottom center. The behavior of the three multiplexers on the bottom over time determine which gate (instruction) is being evaluated.}%
 	\label{fig:arch}
 \end{figure}
 
-I used an event-based design inside the FPGA rather than a central control unit that issues control signals with fixed timings. For example, the memory controller emits a signal when it has finished fetching a value, and this signal is fed to the next component which uses the fetched value.
-
-There are only six instructions: set address, read, write, AND, XOR, and BUF. The first three are for direct memory access (DMA) over the serial connection for setting inputs, reading outputs, and debugging. The latter three instructions are garbled gates to evaluate. Each gate instruction begins with the gate type (opcode), then the wire ID for each input. In the case of the AND instruction, $128*3=384$ bits of ciphertexts follow. All gate instructions end with the gate ID, which is also the wire ID at which to store the gate's output. Since there are so few instructions, and the most common instructions (the gates) each do multiple memory operations, this coprocessor can be considered to have a CISC (complex instruction set computer) architecture.
-
-A high-level overview of the architecture is shown if Fig.~\ref{fig:arch}. The serial signal enters through the SPI module into an encoder/decoder, which breaks each instruction down into its fields and strobes control lines when each field is received. When the wire ID of an input is received, the memory controller fetches the wire label stored at that address. If it is the second wire ID of the gate and it is an XOR gate, then the second fetched wire label is combined with the first with XOR, and the result is held until the gate ID (destination wire label address) is received. Once received, the result is stored at that address.
+A high-level overview of the architecture is shown if Fig.~\ref{fig:arch}. The serial signal enters through the SPI module into an encoder/decoder, which breaks each instruction down into its fields and strobes control lines when each field is received. When the wire ID of an input is received, the memory controller fetches the wire label stored at that address. If it is the second wire ID of the gate and it is an XOR gate, then the second fetched wire label is combined with the first with XOR, and the result is held until the gate ID (destination wire label address) is received. The result is then stored at that address.
 
 If the gate type is an AND gate, then the two fetched values are combined to form the input to the AES hash function and the point-and-permute pointer. Once the AES encryption is complete (which occurs while the first ciphertext is being received), the hash is held until the index of the most recently received ciphertext matches the point-and-permute pointer, at which point they are combined with XOR and the result is held until the gate ID arrives. In all cases, the final result is stored as soon as the gate ID arrives.
-
 
 %There is no need for a multiple-issue pipeline since instructions arrive more slowly than they can be processed. If the ciphertexts and gate definitions could be sent many times faster, their execution could be parallelized with a very similar structure to the current coprocessor design.
 
@@ -77,6 +92,6 @@ My choice of FPGA development platform placed many restrictions on my implementa
 Right now the design uses on-chip SPRAM for wire label storage, which only has space to safely store 8192 wire labels. It effectively functions as a direct-mapped cache without a larger memory device to back it. This means that any gate in the garbled circuit which requests an input wire with an ID more than several thousand addresses behind the gate ID runs the risk of having the desired wire label overwritten. This issue can be easily detected in software during execution or as a preprocessing/validation step, but the much better solution is to use more RAM.
 
 \subsubsection{Scalability}
-The event-based architecture makes it trivial to integrate a new memory controller for a larger bank of memory, such as the DRAM expansion sold by the same manufacturer as the iCEBreaker development board.
+The event-based architecture makes it trivial to integrate a new memory controller for a larger bank of memory. The standard expansion port (PMOD) on the development board makes adding RAM simple, though a new driver would be required on the fabric.
 
 Similarly, a faster AES implementation relying on more lookup tables or an unrolled loop would easily slot into the current design without the concern for tweaking timings or delays in other components.
