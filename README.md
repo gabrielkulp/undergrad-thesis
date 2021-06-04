@@ -12,6 +12,7 @@ The goal of this project is to perform a secure two-party computation on a commo
 ### How do I run it?
 Run `alice.py` and the `bob.py` in separate terminals (in that order, on different computers if you like) to evaluate the specified garbled circuit. You'll need a plaintext circuit definition file in the [Bristol Fashion](https://homes.esat.kuleuven.be/~nsmart/MPC/) format. The current implementation supports four gates: AND, XOR, INV, and EQW (referred to as BUF in some places).
 
+If you want to use FPGA acceleration, run `make prog` in the FPGA directory, then connect the FPGA to the device on which you're running `bob.py` and it should be detected and used automatically.
 
 ### Architecture
 Read the paper for all the fine details!
